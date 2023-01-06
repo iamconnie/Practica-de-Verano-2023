@@ -88,7 +88,7 @@ def E(z, cosmo_pars=dict()):
 def f_integral(z, cosmo_pars=dict()):
     """f_integral define la funcion dentro de la integral
     ocupada para el calculo de r(z)"""
-    return 1/E(z, cosmo_pars)
+    return 1/E_arb(z, cosmo_pars)
 
 
 def r(z, cosmo_pars=dict()):
@@ -98,6 +98,7 @@ def r(z, cosmo_pars=dict()):
     int = integrate.quad(f_integral, 0, z, args=cosmo_pars)
     r = cte*int[0]
     return r
+
 
 # transverse comoving distance
 
