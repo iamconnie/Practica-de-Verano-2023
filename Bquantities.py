@@ -3,6 +3,7 @@
 import sys
 import os
 import numpy as np
+import scipy.integrate as integrate
 
 # instalacion de camb 
 camb_path = os.path.realpath(os.path.join(os.getcwd(),'..'))
@@ -78,3 +79,21 @@ def E(z, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     E = np.sqrt(Om*(1+z)**3 + OL + Ok(1+z)**2)
     return E
+
+
+# comoving distance to an object redshift z
+
+def f_integral(z, cosmo_pars=dict()):
+    "f_integral define la funcion dentro de la integral"
+    "ocupada para el calculo de r(z)"
+    return 1/E(z, cosmo_pars)
+
+
+def r(z, cosmo_pars=dict()):
+    "r calcula comoving distnace to an objecto redshift"
+    cte = 3000  # h^-1 Mpc
+    int = integrate.quad(f_integral, 0, z, args=cosmo_pars)
+    r = cte*int
+    return r
+
+
