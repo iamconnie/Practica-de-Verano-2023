@@ -91,9 +91,29 @@ def f_integral(z, cosmo_pars=dict()):
 
 def r(z, cosmo_pars=dict()):
     "r calcula comoving distnace to an objecto redshift"
-    cte = 3000  # h^-1 Mpc
+    c = 300000  # km/s
+    cte = c/params_P18['H0'] #h^-1 Mpc
     int = integrate.quad(f_integral, 0, z, args=cosmo_pars)
     r = cte*int
     return r
 
+# transverse comoving distance
 
+
+def D(z, cosmo_pars=dict()):
+    c = 300000  # km/s
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    cte_1 = c/H0
+    cte_2 = H0/c
+    a = 1/(1+z)
+    arg_1 = cte_1*(1/(np.abs(Ok)**(1/2)))
+    arg_2 = (np.abs(Ok)**(1/2))*cte_2*r(z, cosmo_pars) 
+
+    if Ok < 0:
+        return a*arg_1*np.sin(arg_2)
+    if Ok == 0:
+        return a*r(z, cosmo_pars)
+    if Ok > 0:
+        return a*arg_1*np.sinh(arg_2)
+    else:
+        print("Error")
