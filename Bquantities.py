@@ -68,16 +68,16 @@ def cosmological_parameters(cosmo_pars=dict()):
 def E_arb(z, cosmo_pars=dict()):
     """E_arb es la función E(z) arbitraria para cualquier modelo cosmologico"""
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    exp = np.exp(-3*wa(z/1+z))
+    exp = np.exp(-3*wa*(z/1+z))
     ind = 1 + wa + w0
-    E = np.sqrt(Om*(1+z)**3 + ODE*((1+z)**(3*ind))*exp + Ok(1+z)**2)
+    E = np.sqrt(Om*(1+z)**3 + ODE*((1+z)**(3*ind))*exp + Ok*(1+z)**2)
     return E
 
 
 def E(z, cosmo_pars=dict()):
     """E es la función E(z) para el caso w0 = -1 y wa = 0"""
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    E = np.sqrt(Om*(1+z)**3 + OL + Ok(1+z)**2)
+    E = np.sqrt(Om*(1+z)**3 + OL + Ok*(1+z)**2)
     return E
 
 
@@ -94,7 +94,7 @@ def r(z, cosmo_pars=dict()):
     c = 300000  # km/s
     cte = c/params_P18['H0'] #h^-1 Mpc
     int = integrate.quad(f_integral, 0, z, args=cosmo_pars)
-    r = cte*int
+    r = cte*int[0]
     return r
 
 # transverse comoving distance
@@ -108,14 +108,13 @@ def D(z, cosmo_pars=dict()):
     cte_1 = c/H0
     cte_2 = H0/c
     a = 1/(1+z)
-    arg_1 = cte_1*(1/(np.abs(Ok)**(1/2)))
-    arg_2 = (np.abs(Ok)**(1/2))*cte_2*r(z, cosmo_pars) 
-
     if Ok < 0:
-        return a*arg_1*np.sin(arg_2)
+        return a*(cte_1*(1/(np.abs(Ok)**(1/2))))*np.sin(
+            np.abs(Ok)**(1/2)*cte_2*r(z, cosmo_pars))
     if Ok == 0:
         return a*r(z, cosmo_pars)
     if Ok > 0:
-        return a*arg_1*np.sinh(arg_2)
+        return a*(cte_1*(1/(Ok**(1/2))))*np.sinh(
+            (Ok**(1/2))*cte_2*r(z, cosmo_pars))
     else:
         return "Error"
