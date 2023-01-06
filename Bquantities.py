@@ -34,25 +34,25 @@ params_P18['Ov'] = 0  # en este caso tomamos la densidad de radiación como nula
 
 
 def Omega_Lambda(Omega_m, Omega_b, Omega_v):
-    "La funcion Omega_Lambda nos entregara este parametro en base a los que"
-    "tenemos, para esto tambien debemos calcular Omega c, un parametro que"
-    "no se utilizara, por lo que no es necesario almacenar"
+    """La funcion Omega_Lambda nos entregara este parametro en base a los que
+    tenemos, para esto tambien debemos calcular Omega c, un parametro que
+    no se utilizara, por lo que no es necesario almacenar"""
     Omega_c = Omega_m - Omega_b
     OL = 1 - Omega_c - Omega_b - Omega_v
     return OL
 
 
 def Omega_K_0(Omega_DE, Omega_m):
-    "Omega_K_0 nos entrega este parametro que es depende de Omega DE y"
-    "Omega m, en el caso de del modelo ΛCDM este valor es cero"
+    """Omega_K_0 nos entrega este parametro que es depende de Omega DE y
+    Omega m, en el caso de del modelo ΛCDM este valor es cero"""
     OK = 1 - (Omega_DE + Omega_m)
     return OK
 
 
 def cosmological_parameters(cosmo_pars=dict()):
-    "cosmological_parameters extrae los parametros necesarios para las"
-    "el calculo de funciones E(z) y D(z), concadena estos parametros de manera"
-    "que sean facil de utilizar, el default son los parametros de Planck 2018"
+    """cosmological_parameters extrae los parametros necesarios para las
+    el calculo de funciones E(z) y D(z), concadena estos parametros de manera
+    que sean facil de utilizar, el default son los parametros de Planck 2018"""
     H0 = cosmo_pars.get('H0', params_P18['H0'])
     Om = cosmo_pars.get('Om', params_P18['Om'])
     Ob = cosmo_pars.get('Ob', params_P18['Ob'])
@@ -66,7 +66,7 @@ def cosmological_parameters(cosmo_pars=dict()):
 
 
 def E_arb(z, cosmo_pars=dict()):
-    "E_arb es la función E(z) arbitraria para cualquier modelo cosmologico"
+    """E_arb es la función E(z) arbitraria para cualquier modelo cosmologico"""
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     exp = np.exp(-3*wa(z/1+z))
     ind = 1 + wa + w0
@@ -75,7 +75,7 @@ def E_arb(z, cosmo_pars=dict()):
 
 
 def E(z, cosmo_pars=dict()):
-    "E es la función E(z) para el caso w0 = -1 y wa = 0"
+    """E es la función E(z) para el caso w0 = -1 y wa = 0"""
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     E = np.sqrt(Om*(1+z)**3 + OL + Ok(1+z)**2)
     return E
@@ -84,13 +84,13 @@ def E(z, cosmo_pars=dict()):
 # comoving distance to an object redshift z
 
 def f_integral(z, cosmo_pars=dict()):
-    "f_integral define la funcion dentro de la integral"
-    "ocupada para el calculo de r(z)"
+    """f_integral define la funcion dentro de la integral
+    ocupada para el calculo de r(z)"""
     return 1/E(z, cosmo_pars)
 
 
 def r(z, cosmo_pars=dict()):
-    "r calcula comoving distnace to an objecto redshift"
+    """r calcula comoving distnace to an objecto redshift"""
     c = 300000  # km/s
     cte = c/params_P18['H0'] #h^-1 Mpc
     int = integrate.quad(f_integral, 0, z, args=cosmo_pars)
@@ -101,6 +101,8 @@ def r(z, cosmo_pars=dict()):
 
 
 def D(z, cosmo_pars=dict()):
+    """La funcion D calcula transverse comoving distance para los distintos
+    casos de el parametro Omgea_K_0"""
     c = 300000  # km/s
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     cte_1 = c/H0
@@ -116,4 +118,4 @@ def D(z, cosmo_pars=dict()):
     if Ok > 0:
         return a*arg_1*np.sinh(arg_2)
     else:
-        print("Error")
+        return "Error"
