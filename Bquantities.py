@@ -15,7 +15,9 @@ import camb as camb
 # Creación de funciones E(z) y D(z), a manera de prueba se ocuparan los
 # valores de Planck 2016 para testear las funciones
 
-params_P18 = dict()
+params_P18 = dict() 
+# crearemos diccionarios en donde estaran los parametros cosmologicos que
+# queremos utilizar, es facil poder crear y modificar diccionarios
 
 params_P18['Ob'] = 0.05   # Omega_b_0
 params_P18['Om'] = 0.32  # Omega_m_0
@@ -31,13 +33,18 @@ params_P18['Ov'] = 0  # en este caso tomamos la densidad de radiación como nula
 
 
 def Omega_Lambda(Omega_m, Omega_b, Omega_v):
+    "La funcion Omega_Lambda nos entregara este parametro en base a los que"
+    "tenemos, para esto tambien debemos calcular Omega c, un parametro que"
+    "no se utilizara, por lo que no es necesario almacenar"
     Omega_c = Omega_m - Omega_b
     OL = 1 - Omega_c - Omega_b - Omega_v
     return OL
 
 
 def Omega_K_0(Omega_DE, Omega_m):
-    OK = 1 + (Omega_DE + Omega_m)
+    "Omega_K_0 nos entrega este parametro que es depende de Omega DE y"
+    "Omega m, en el caso de del modelo ΛCDM este valor es cero"
+    OK = 1 - (Omega_DE + Omega_m)
     return OK
 
 
