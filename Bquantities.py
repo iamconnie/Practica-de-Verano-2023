@@ -4,19 +4,21 @@ import sys
 import os
 import numpy as np
 import scipy.integrate as integrate
-
-# instalacion de camb 
-camb_path = os.path.realpath(os.path.join(os.getcwd(),'..'))
-sys.path.insert(0,camb_path)
-
 import camb as camb
-# print('Using CAMB %s installed at %s'%(camb.__version__,os.path.dirname(camb.__file__)))
+
+
+# instalacion de camb
+camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
+sys.path.insert(0, camb_path)
+
+
+print('Using CAMB %s installed at %s'%(camb.__version__, os.path.dirname(camb.__file__ )))
 
 
 # Creación de funciones E(z) y D(z), a manera de prueba se ocuparan los
 # valores de Planck 2016 para testear las funciones
 
-params_P18 = dict() 
+params_P18 = dict()
 # crearemos diccionarios en donde estaran los parametros cosmologicos que
 # queremos utilizar, es facil poder crear y modificar diccionarios
 
@@ -92,7 +94,7 @@ def f_integral(z, cosmo_pars=dict()):
 def r(z, cosmo_pars=dict()):
     """r calcula comoving distnace to an objecto redshift"""
     c = 300000  # km/s
-    cte = c/params_P18['H0'] #h^-1 Mpc
+    cte = c/params_P18['H0']  # h^-1 Mpc
     int = integrate.quad(f_integral, 0, z, args=cosmo_pars)
     r = cte*int[0]
     return r
