@@ -5,14 +5,14 @@ import os
 import numpy as np
 import scipy.integrate as integrate
 import camb as camb
-
+from matplotlib import pyplot as plt
 
 # instalacion de camb
 camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
 sys.path.insert(0, camb_path)
 
 
-print('Using CAMB %s installed at %s'%(camb.__version__, os.path.dirname(camb.__file__ )))
+print('Using CAMB %s installed at %s'%(camb.__version__, os.path.dirname(camb.__file__)))
 
 
 # Creación de funciones E(z) y D(z), a manera de prueba se ocuparan los
@@ -121,3 +121,36 @@ def D(z, cosmo_pars=dict()):
             (Ok**(1/2))*cte_2*r(z, cosmo_pars))
     else:
         return "Error"
+
+
+# all plots in the same row, share the y-axis.
+
+z_arr = np.linspace(0, 2.5, 100)
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+
+# Proper distance dependent on redshift plot
+ax.plot(z_arr, E_arb(z_arr), label='$E(z)$', color='mediumpurple')
+ax.set_xlabel('Redshift $z$')
+ax.set_ylabel('$E(z)$')
+ax.set_title('Proper distance $E(z) as a function of redshift $z$')
+plt.show()
+
+# Comoving distance to an object redshift z plot
+
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+for z in z_arr:
+    ax.scatter(z, r(z), s=1.0, label='$r(z)$', color='mediumpurple')
+ax.set_xlabel('Redshift $z$')
+ax.set_ylabel('$Comoving distance r(z)$')
+ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
+plt.show()
+
+# Angular diameter distance to an object redshift z plot
+
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+for z in z_arr:
+    ax.scatter(z, D(z), s=1.0, label='$D_A(z)$', color='mediumpurple')
+ax.set_xlabel('Redshift $z$')
+ax.set_ylabel('$D_A(z)$')
+ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
+plt.show()
