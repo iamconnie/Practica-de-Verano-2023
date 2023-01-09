@@ -34,6 +34,31 @@ params_P18['w_a'] = 0
 params_P18['gamma'] = 0.55
 params_P18['Ov'] = 0  # en este caso tomamos la densidad de radiación como nula
 
+# Creacion de parametros con CAMB
+
+pars = camb.CAMBparams()
+
+# This function sets up CosmoMC-like settings, with one massive neutrino and
+# helium set using BBN consistency
+
+pars.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
+pars.set_cosmology(H0=67.4, ombh2=0.02233, omch2=0.1198, omk=0, tau=0.054)
+results = camb.get_results(pars)
+
+params_CAMB = dict()
+# crearemos diccionarios en donde estaran los parametros cosmologicos que
+# queremos utilizar, es facil poder crear y modificar diccionarios
+
+params_CAMB['Ob'] = results.get_Omega('baryon')
+params_CAMB['Om'] = 1 - pars.omk - results.get_Omega('de')
+params_CAMB['ODE'] = results.get_Omega('de')
+params_CAMB['H0'] = pars.H0
+params_CAMB['w_0'] = pars.DarkEnergy.w
+params_CAMB['w_a'] = pars.DarkEnergy.wa
+params_CAMB['Ov'] = results.get_Omega('photon')
+
+# cration of basic background quantities
+
 
 def Omega_Lambda(Omega_m, Omega_b, Omega_v):
     """La funcion Omega_Lambda nos entregara este parametro en base a los que
@@ -150,6 +175,38 @@ plt.show()
 fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
 for z in z_arr:
     ax.scatter(z, D(z), s=1.0, label='$D_A(z)$', color='mediumpurple')
+ax.set_xlabel('Redshift $z$')
+ax.set_ylabel('$D_A(z)$')
+ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
+plt.show()
+
+# now using CAMB parameters
+
+# Proper distance dependent on redshift plot
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+ax.plot(z_arr, E_arb(z_arr, params_CAMB), label='$E(z)$', color='mediumpurple')
+ax.set_xlabel('Redshift $z$')
+ax.set_ylabel('$E(z)$')
+ax.set_title('Proper distance $E(z) as a function of redshift $z$')
+plt.show()
+
+# Comoving distance to an object redshift z plot
+
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+for z in z_arr:
+    ax.scatter(z, r(z, params_CAMB), s=1.0, label='$r(z)$',
+               color='mediumpurple')
+ax.set_xlabel('Redshift $z$')
+ax.set_ylabel('$Comoving distance r(z)$')
+ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
+plt.show()
+
+# Angular diameter distance to an object redshift z plot
+
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+for z in z_arr:
+    ax.scatter(z, D(z, params_CAMB), s=1.0, label='$D_A(z)$',
+               color='mediumpurple')
 ax.set_xlabel('Redshift $z$')
 ax.set_ylabel('$D_A(z)$')
 ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
