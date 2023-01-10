@@ -272,13 +272,12 @@ def int_1(z, zp):
 
 
 def n_i(z, zp):
-
-    l = []
+    lst = []
     z_i = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50] # momentaneo
     for i in z_i:
         I1 = integrate.quad(int_1, i, i+1, args=z)[0]
         I2 = integrate.dblquad(int_1, z_i[0], z_i[:-1], i, i+1, args=z)[0]
-        l.append(I1/I2)
+        lst.append(I1/I2)
         i += 1
-    return l
+    return lst
 
