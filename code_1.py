@@ -211,3 +211,62 @@ ax.set_xlabel('Redshift $z$')
 ax.set_ylabel('$D_A(z)$')
 ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
 plt.show()
+
+
+# Window Function
+
+# Parameters adopted to describe the photometric redshift distribution source
+
+PRD = dict()
+
+PRD['cb'] = 1.0
+PRD['zb'] = 0.0
+PRD['sigmab'] = 0.05
+PRD['co'] = 1.0
+PRD['zo'] = 0.1
+PRD['sigmao'] = 0.05
+PRD['fout'] = 0.1
+
+# Tilde function of comoving distance
+
+
+def tilde_r(z, cosmo_pars=dict()):
+    c = 300000  # km/s
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    cte = c/H0
+    return r(z,cosmo_pars)/cte
+
+# Photometric redshift estimates:
+
+
+def n(z):
+    zm = 0.9  # median redshift, value given by Euclid Red Book
+    z0 = zm/(np.sqrt(2))
+    frac = z/z0
+    return (frac**2)*np.exp(-frac**(3/2))
+
+
+# Photometric redshift ditribution of sources
+
+def P_ph(z, zp):
+    cb = PRD['cb']
+    zb = PRD['zb']
+    sigmab = PRD['sigmab']
+    co = PRD['co']
+    zo = PRD['zo']
+    sigmao = PRD['sigmao']
+    fout = PRD['fout']
+  
+    frac_1 = (1-fout)/(np.sqrt(2*np.pi)*sigmab*(1+z))
+    frac_2 = fout/(np.sqrt(2*np.pi)*sigmao*(1+z))
+    exp_1 = (-1/2)*(((z/cb*zp-zb)/sigmab(1+z))**2)
+    exp_2 = (-1/2)*(((z/co*zp-zo)/sigmao(1+z))**2)
+  
+    return frac_1*exp_1 + frac_2*exp_2
+
+
+# Defining integrals for photometric redshift estimates
+
+def int_1(z, zp):
+    return n(z)*P_ph(z, zp)
+
