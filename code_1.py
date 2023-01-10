@@ -267,13 +267,17 @@ def P_ph(zp, z):
 
 # Defining integrals for photometric redshift estimates
 
+z_i = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50]
+
+
 def int_1(z, zp):
     return n(z)*P_ph(zp, z)
 
+# FUNCIONES MOMENTANEAS DEBO CORREGIR Y REVISARLAS
 
-def n_i(z, zp):
-    lst = []
-    z_i = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50] # momentaneo
+
+def n_i(z):
+    lst = []  # momentaneo
     for i in z_i:
         I1 = integrate.quad(int_1, i, i+1, args=z)[0]
         I2 = integrate.dblquad(int_1, z_i[0], z_i[:-1], i, i+1, args=z)[0]
@@ -281,3 +285,13 @@ def n_i(z, zp):
         i += 1
     return lst
 
+# Window Function
+
+
+def W_int(z_1, z):
+    return n_i(z_1)*[1-(tilde_r(z)/tilde_r(z_1))]
+
+
+def Window_F(z):
+    I1 = integrate.quad(W_int, z, z_i[:-1], args=z)[0]
+    return I1
