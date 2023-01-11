@@ -7,6 +7,7 @@ import scipy.integrate as integrate
 import camb as camb
 from matplotlib import pyplot as plt
 from scipy.stats import binned_statistic
+import time
 
 # instalacion de camb
 camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
@@ -300,3 +301,17 @@ def W_int(z_1, z, i):
 def Window_F(z, i):
     return integrate.quad(W_int, z, z_bin.bin_edges[-1], args=(z, i))[0]
 
+
+# Window function for an specific bin for redshift
+start = time.time()
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+for z in z_arr:
+    ax.scatter(z, Window_F(z, 10), s=2.0, label='$Window Function(z)$',
+               color='mediumpurple')
+ax.set_xlabel('Redshift $z$')
+ax.set_ylabel('Window Function $\tilde{W}_{10}(z)$')
+ax.set_title('Window function for an specific bin $\tilde{W}(z)$ as a function of redshift $z$')
+end = time.time()
+
+print("El tiempo que se demoró es "+str(end-start)+" segundos")
+plt.show()
