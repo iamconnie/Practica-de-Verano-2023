@@ -6,6 +6,7 @@ import numpy as np
 import scipy.integrate as integrate
 import camb as camb
 from matplotlib import pyplot as plt
+from scipy.stats import binned_statistic
 
 # instalacion de camb
 camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
@@ -215,6 +216,10 @@ plt.show()
 
 # Window Function
 
+# Bin creation
+
+z_bin = binned_statistic(z_arr, z_arr, bins=100)
+
 # Parameters adopted to describe the photometric redshift distribution source
 
 PRD = dict()
@@ -234,7 +239,7 @@ def tilde_r(z, cosmo_pars=dict()):
     c = 300000  # km/s
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     cte = c/H0
-    return r(z,cosmo_pars)/cte
+    return r(z, cosmo_pars)/cte
 
 # Photometric redshift estimates:
 
@@ -256,42 +261,42 @@ def P_ph(zp, z):
     zo = PRD['zo']
     sigmao = PRD['sigmao']
     fout = PRD['fout']
-  
+
     frac_1 = (1-fout)/(np.sqrt(2*np.pi)*sigmab*(1+z))
+
     frac_2 = fout/(np.sqrt(2*np.pi)*sigmao*(1+z))
-    exp_1 = (-1/2)*(((z/cb*zp-zb)/sigmab(1+z))**2)
-    exp_2 = (-1/2)*(((z/co*zp-zo)/sigmao(1+z))**2)
-  
+
+    exp_1 = np.exp((-1/2)*((z-cb*zp-zb)/sigmab*(1+z))**2)
+
+    exp_2 = np.exp((-1/2)*((z-co*zp-zo)/sigmao*(1+z))**2)
+
     return frac_1*exp_1 + frac_2*exp_2
 
 
 # Defining integrals for photometric redshift estimates
 
-z_i = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50]
 
-
-def int_1(z, zp):
+def int_1(zp, z):
     return n(z)*P_ph(zp, z)
 
 # FUNCIONES MOMENTANEAS DEBO CORREGIR Y REVISARLAS
 
 
-def n_i(z):
-    lst = []  # momentaneo
-    for i in z_i:
-        I1 = integrate.quad(int_1, i, i+1, args=z)[0]
-        I2 = integrate.dblquad(int_1, z_i[0], z_i[:-1], i, i+1, args=z)[0]
-        lst.append(I1/I2)
-        i += 1
-    return lst
+def n_i(z, i):
+    I1 = integrate.quad(int_1, z_bin.bin_edges[i],
+                        z_bin.bin_edges[i+1], args=z)[0]
+    I2 = integrate.nquad(int_1, [[z_bin.bin_edges[i], z_bin.bin_edges[i+1]],
+                         [z_bin.bin_edges[0], z_bin.bin_edges[-1]]])[0]
+
+    return I1/I2
 
 # Window Function
 
 
-def W_int(z_1, z):
-    return n_i(z_1)*[1-(tilde_r(z)/tilde_r(z_1))]
+def W_int(z_1, z, i):
+    return n_i(z_1, i)*(1-(tilde_r(z)/tilde_r(z_1)))
 
 
-def Window_F(z):
-    I1 = integrate.quad(W_int, z, z_i[:-1], args=z)[0]
-    return I1
+def Window_F(z, i):
+    return integrate.quad(W_int, z, z_bin.bin_edges[-1], args=(z, i))[0]
+
