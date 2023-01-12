@@ -428,3 +428,38 @@ def Weight_F(z, i, cosmo_pars=dict()):
     cte = (3/2)*((H0/c)**2)
     return cte*params_CAMB['Om']*(1 + z)*r(z, cosmo_pars)*Window_F(z, i)
 
+
+
+
+
+
+
+def int_2(z, i, j, cosmo_pars=dict()):
+    I1 = (Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))/(E(z, cosmo_pars)*(r(z, cosmo_pars)**2))
+    return I1
+
+
+def C(l, z, i, j, cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    c = const.c.value
+    cte = (c/H0)
+    I1 = integrate.quad(int_2, z_bin[0], z_bin[-1], args=(i, j, cosmo_pars))
+    k = (l + (1/2))/r(z, cosmo_pars)
+    PMS = PK.P(z, k)
+    return cte*I1*PMS
+
+
+
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+k = np.exp(np.log(10)*np.linspace(-4, 2, 200))
+l_toplot = [97, 138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
+for l in l_toplot:
+    ax.loglog(l, C(l, ))
+ax.xlim([1e-4,kmax])
+ax.xlabel('k Mpc')
+ax.ylabel('$P_\Psi\, Mpc^{-3}$')
+ax.legend(['z=%s'%z for z in zplot])
+# plt.show()
+    
+
+
