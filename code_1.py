@@ -10,6 +10,7 @@ from scipy.stats import binned_statistic
 import time
 from camb import model
 import pandas as pd
+from astropy import constants as const
 
 # instalacion de camb
 camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
@@ -122,7 +123,7 @@ def f_integral(z, cosmo_pars=dict()):
 
 def r(z, cosmo_pars=dict()):
     """r calcula comoving distnace to an objecto redshift"""
-    c = 300000  # km/s
+    c = const.c.value
     cte = c/params_P18['H0']  # h^-1 Mpc
     int = integrate.quad(f_integral, 0, z, args=cosmo_pars)
     r = cte*int[0]
@@ -135,7 +136,7 @@ def r(z, cosmo_pars=dict()):
 def D(z, cosmo_pars=dict()):
     """La funcion D calcula transverse comoving distance para los distintos
     casos de el parametro Omgea_K_0"""
-    c = 300000  # km/s
+    c = const.c.value
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     cte_1 = c/H0
     cte_2 = H0/c
@@ -239,7 +240,7 @@ PRD['fout'] = 0.1
 
 
 def tilde_r(z, cosmo_pars=dict()):
-    c = 300000  # km/s
+    c = const.c.value
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     cte = c/H0
     return r(z, cosmo_pars)/cte
@@ -415,3 +416,15 @@ ax.xlabel('k Mpc')
 ax.ylabel('$P_\Psi\, Mpc^{-3}$')
 ax.legend(['z=%s'%z for z in zplot])
 # plt.show()
+
+# Calculation of Cosmic shear power spectrum:
+
+# Weight function
+
+
+def Weight_F(z, i, cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    c = const.c.value
+    cte = (3/2)*((H0/c)**2)
+    return cte*params_CAMB['Om']*(1 + z)*r(z, cosmo_pars)*Window_F(z, i)
+
