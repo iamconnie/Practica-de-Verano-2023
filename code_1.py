@@ -8,7 +8,8 @@ import camb
 from matplotlib import pyplot as plt
 from scipy.stats import binned_statistic
 import time
-from camb import model 
+from camb import model
+import pandas as pd
 
 # instalacion de camb
 camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
@@ -220,7 +221,7 @@ ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
 
 # Bin creation
 
-z_bin = binned_statistic(z_arr, z_arr, bins=100)
+z_bin = binned_statistic(z_arr, z_arr, bins=10)
 
 # Parameters adopted to describe the photometric redshift distribution source
 
@@ -344,14 +345,17 @@ kh_nonlin, z_nonlin, pk_nonlin = results.get_matter_power_spectrum(minkh=1e-4,
 
 # Storage power matter parameters
 
-params_MPS = dict()
 
-params_MPS['kh'] = kh
-params_MPS['z'] = z
-params_MPS['pk'] = pk
-params_MPS['n_kh'] = kh_nonlin
-params_MPS['n_z'] = z_nonlin
-params_MPS['n_pk'] = pk_nonlin
+list_of_PMS = list(zip(kh, z, pk, kh_nonlin, z_nonlin, pk_nonlin))
+ 
+# Converting lists of tuples into
+# pandas Dataframe.
+df = pd.DataFrame(list_of_PMS,
+                  columns=['kh', 'z', 'pk', 'nonlinear_kh',
+                           'nonlinear_z', 'nonlinear_pk'])
+
+# Print data.
+df.to_csv('PMS_params.txt', sep='\t')
 
 
 # Plotting matter power spectrum
@@ -364,10 +368,12 @@ ax.legend(['linear','non-linear'], loc='lower left')
 ax.title('Matter power at z=%s and z= %s'%tuple(z_bin[0]))
 # plt.show()
 
-#For calculating large-scale structure and lensing results yourself, get a power spectrum
-#interpolation object. In this example we calculate the CMB lensing potential power
-#spectrum using the Limber approximation, using PK=camb.get_matter_power_interpolator() function.
-#calling PK(z, k) will then get power spectrum at any k and redshift z in range.
+# For calculating large-scale structure and lensing results yourself,
+# get a power spectrum interpolation object.
+# In this example we calculate the CMB lensing potential power
+# spectrum using the Limber approximation,
+# using PK=camb.get_matter_power_interpolator() function.
+# calling PK(z, k) will then get power spectrum at any k and redshift z in range.
 
 nz = 100  # number of steps to use for the radial/redshift integration
 kmax = 2   # kmax to use
@@ -396,10 +402,12 @@ PK = camb.get_matter_power_interpolator(pars,
                                         zmax=zs[-1])
 
 # Have a look at interpolated power spectrum results for a range of redshifts
-# Expect linear potentials to decay a bit when Lambda becomes important, and change from non-linear growth
+# Expect linear potentials to decay a bit when Lambda becomes important,
+# and change from non-linear growth
+
 fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
 k = np.exp(np.log(10)*np.linspace(-4, 2, 200))
-zplot = [0, 0.5, 1, 4 ,20] # segun yo se plotea z_arr o la lista de los bins
+zplot = [0, 0.5, 1, 4, 20] # segun yo se plotea z_arr o la lista de los bins
 for z in zplot:
     ax.loglog(k, PK.P(z, k))
 ax.xlim([1e-4,kmax])
