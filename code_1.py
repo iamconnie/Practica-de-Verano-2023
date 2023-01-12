@@ -4,11 +4,11 @@ import sys
 import os
 import numpy as np
 import scipy.integrate as integrate
-import camb as camb
+import camb
 from matplotlib import pyplot as plt
 from scipy.stats import binned_statistic
 import time
-from camb import model, initialpower
+from camb import model 
 
 # instalacion de camb
 camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
