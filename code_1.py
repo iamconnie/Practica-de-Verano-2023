@@ -329,13 +329,18 @@ pars.set_matter_power(redshifts=z_bin[0], kmax=2.0)
 # Linear spectra
 pars.NonLinear = model.NonLinear_none
 results = camb.get_results(pars)
-kh, z, pk = results.get_matter_power_spectrum(minkh=1e-4, maxkh=1, npoints = 200)
+kh, z, pk = results.get_matter_power_spectrum(minkh=1e-4, maxkh=1,
+                                              npoints=200)
 s8 = np.array(results.get_sigma8())
 
 # Non-Linear spectra (Halofit)
 pars.NonLinear = model.NonLinear_both
 results.calc_power_spectra(pars)
-kh_nonlin, z_nonlin, pk_nonlin = results.get_matter_power_spectrum(minkh=1e-4, maxkh=1, npoints = 200)
+kh_nonlin, z_nonlin, pk_nonlin = results.get_matter_power_spectrum(minkh=1e-4,
+                                                                   maxkh=1,
+                                                                   npoints=200)
+
+
 
 # Storage power matter parameters
 
@@ -350,10 +355,55 @@ params_MPS['n_pk'] = pk_nonlin
 
 
 # Plotting matter power spectrum
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+for i, (redshift, line) in enumerate(zip(z_bin[0], ['-', '--'])):
+    ax.loglog(kh, pk[i, :], color='k', ls = line)
+    ax.loglog(kh_nonlin, pk_nonlin[i, :], color='r', ls=line)
+ax.xlabel('k/h Mpc')
+ax.legend(['linear','non-linear'], loc='lower left')
+ax.title('Matter power at z=%s and z= %s'%tuple(z_bin[0]))
+# plt.show()
 
-for i, (redshift, line) in enumerate(zip(z_bin[0],['-','--'])):
-    plt.loglog(kh, pk[i,:], color='k', ls = line)
-    plt.loglog(kh_nonlin, pk_nonlin[i,:], color='r', ls = line)
-plt.xlabel('k/h Mpc');
-plt.legend(['linear','non-linear'], loc='lower left');
-plt.title('Matter power at z=%s and z= %s'%tuple(z_bin[0]));
+#For calculating large-scale structure and lensing results yourself, get a power spectrum
+#interpolation object. In this example we calculate the CMB lensing potential power
+#spectrum using the Limber approximation, using PK=camb.get_matter_power_interpolator() function.
+#calling PK(z, k) will then get power spectrum at any k and redshift z in range.
+
+nz = 100  # number of steps to use for the radial/redshift integration
+kmax = 2   # kmax to use
+
+# For Limber result, want integration over \chi, from 0 to chi_*.
+# so get background results to find chistar, set up a range in chi,
+# and calculate corresponding redshifts
+results = camb.get_background(pars)
+chistar = results.conformal_time(0) - results.tau_maxvis
+chis = np.linspace(0, chistar, nz)
+zs = results.redshift_at_comoving_radial_distance(chis)
+# Calculate array of delta_chi, and drop first and last points where things go singular
+dchis = (chis[2:]-chis[:-2])/2
+chis = chis[1:-1]
+zs = zs[1:-1]
+
+# Get the matter power spectrum interpolation object.
+# Here for lensing we want the power spectrum of the Weyl potential.
+PK = camb.get_matter_power_interpolator(pars,
+                                        nonlinear=True,
+                                        hubble_units=False,
+                                        k_hunit=False,
+                                        kmax=kmax,
+                                        var1=model.Transfer_Weyl,
+                                        var2=model.Transfer_Weyl,
+                                        zmax=zs[-1])
+
+# Have a look at interpolated power spectrum results for a range of redshifts
+# Expect linear potentials to decay a bit when Lambda becomes important, and change from non-linear growth
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+k = np.exp(np.log(10)*np.linspace(-4, 2, 200))
+zplot = [0, 0.5, 1, 4 ,20] # segun yo se plotea z_arr o la lista de los bins
+for z in zplot:
+    ax.loglog(k, PK.P(z, k))
+ax.xlim([1e-4,kmax])
+ax.xlabel('k Mpc')
+ax.ylabel('$P_\Psi\, Mpc^{-3}$')
+ax.legend(['z=%s'%z for z in zplot])
+# plt.show()
