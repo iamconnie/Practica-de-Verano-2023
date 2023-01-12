@@ -8,6 +8,7 @@ import camb as camb
 from matplotlib import pyplot as plt
 from scipy.stats import binned_statistic
 import time
+from camb import model, initialpower
 
 # instalacion de camb
 camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
@@ -190,7 +191,7 @@ ax.plot(z_arr, E_arb(z_arr, params_CAMB), label='$E(z)$', color='mediumpurple')
 ax.set_xlabel('Redshift $z$')
 ax.set_ylabel('$E(z)$')
 ax.set_title('Proper distance $E(z) as a function of redshift $z$')
-plt.show()
+# plt.show()
 
 # Comoving distance to an object redshift z plot
 
@@ -201,7 +202,7 @@ for z in z_arr:
 ax.set_xlabel('Redshift $z$')
 ax.set_ylabel('$Comoving distance r(z)$')
 ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
-plt.show()
+# plt.show()
 
 # Angular diameter distance to an object redshift z plot
 
@@ -212,7 +213,7 @@ for z in z_arr:
 ax.set_xlabel('Redshift $z$')
 ax.set_ylabel('$D_A(z)$')
 ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
-plt.show()
+# plt.show()
 
 
 # Window Function
@@ -314,4 +315,45 @@ ax.set_title('Window function for an specific bin $\tilde{W}(z)$ as a function o
 end = time.time()
 
 print("El tiempo que se demoró es "+str(end-start)+" segundos")
-plt.show()
+# plt.show()
+
+
+# Matter Power spectrum following CAMB demo
+pars = camb.CAMBparams()
+pars.set_cosmology(H0=67.5, ombh2=0.02233, omch2=0.1198, omk=0, tau=0.054)
+# Now get matter power spectra and sigma8 at redshift 0 and 0.8
+pars.InitPower.set_params(ns=0.9652)
+# Note non-linear corrections couples to smaller scales than you want
+pars.set_matter_power(redshifts=z_bin[0], kmax=2.0)
+
+# Linear spectra
+pars.NonLinear = model.NonLinear_none
+results = camb.get_results(pars)
+kh, z, pk = results.get_matter_power_spectrum(minkh=1e-4, maxkh=1, npoints = 200)
+s8 = np.array(results.get_sigma8())
+
+# Non-Linear spectra (Halofit)
+pars.NonLinear = model.NonLinear_both
+results.calc_power_spectra(pars)
+kh_nonlin, z_nonlin, pk_nonlin = results.get_matter_power_spectrum(minkh=1e-4, maxkh=1, npoints = 200)
+
+# Storage power matter parameters
+
+params_MPS = dict()
+
+params_MPS['kh'] = kh
+params_MPS['z'] = z
+params_MPS['pk'] = pk
+params_MPS['n_kh'] = kh_nonlin
+params_MPS['n_z'] = z_nonlin
+params_MPS['n_pk'] = pk_nonlin
+
+
+# Plotting matter power spectrum
+
+for i, (redshift, line) in enumerate(zip(z_bin[0],['-','--'])):
+    plt.loglog(kh, pk[i,:], color='k', ls = line)
+    plt.loglog(kh_nonlin, pk_nonlin[i,:], color='r', ls = line)
+plt.xlabel('k/h Mpc');
+plt.legend(['linear','non-linear'], loc='lower left');
+plt.title('Matter power at z=%s and z= %s'%tuple(z_bin[0]));
