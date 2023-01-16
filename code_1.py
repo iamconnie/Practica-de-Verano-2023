@@ -85,15 +85,15 @@ def cosmological_parameters(cosmo_pars=dict()):
     """cosmological_parameters extrae los parametros necesarios para las
     el calculo de funciones E(z) y D(z), concadena estos parametros de manera
     que sean facil de utilizar, el default son los parametros de Planck 2018"""
-    H0 = cosmo_pars.get('H0', params_P18['H0'])
-    Om = cosmo_pars.get('Om', params_P18['Om'])
-    Ob = cosmo_pars.get('Ob', params_P18['Ob'])
-    Ov = cosmo_pars.get('Ov', params_P18['Ov'])
-    ODE = cosmo_pars.get('ODE', params_P18['ODE'])
+    H0 = cosmo_pars.get('H0', params_CAMB['H0'])
+    Om = cosmo_pars.get('Om', params_CAMB['Om'])
+    Ob = cosmo_pars.get('Ob', params_CAMB['Ob'])
+    Ov = cosmo_pars.get('Ov', params_CAMB['Ov'])
+    ODE = cosmo_pars.get('ODE', params_CAMB['ODE'])
     OL = Omega_Lambda(Om, Ob, Ov)
     OK = Omega_K_0(ODE, Om)
-    wa = cosmo_pars.get('wa', params_P18['w_a'])
-    w0 = cosmo_pars.get('w0', params_P18['w_0'])
+    wa = cosmo_pars.get('wa', params_CAMB['w_a'])
+    w0 = cosmo_pars.get('w0', params_CAMB['w_0'])
     return H0, Om, ODE, OL, OK, wa, w0
 
 
@@ -360,7 +360,10 @@ df = pd.DataFrame(list_of_PMS,
 # Print data.
 df.to_csv('PMS_params.txt', sep='\t')
 
-for i in range(len(z_bin_equi[0])):
+# Storage number density
+
+
+for i in range(len(z_bin[0])):
     list = []
     for z in z_bin[0]:
         list.append([n_i(z, i), z])
@@ -370,15 +373,9 @@ df_1.to_csv('Bin_number_d.txt', sep='\t')
 
 
 
-# Plotting matter power spectrum
 
-# plt.figure(figsize=(8, 5))
-# for i, (redshift, line) in enumerate(zip(z_bin_equi[0], ['-', '--'])):
-#     plt.loglog(kh_nonlin, pk_nonlin[i, :], color='r', ls=line)
-# plt.xlabel('k/h Mpc')
-# plt.legend(['linear','non-linear'], loc='lower left')
-# plt.title('Matter power at z=%s and z= %s'%tuple(z_bin_equi[0]))
-# plt.show()
+
+# Interpolator CAMB
 
 # For calculating large-scale structure and lensing results yourself,
 # get a power spectrum interpolation object.
@@ -388,7 +385,7 @@ df_1.to_csv('Bin_number_d.txt', sep='\t')
 # calling PK(z, k) will then get power spectrum at any k and redshift z in range.
 
 nz = 100  # number of steps to use for the radial/redshift integration
-kmax = 2   # kmax to use
+kmax = 7   # kmax to use with k_hunit = Mpc/h
 
 # For Limber result, want integration over \chi, from 0 to chi_*.
 # so get background results to find chistar, set up a range in chi,
@@ -407,10 +404,10 @@ zs = zs[1:-1]
 PK = camb.get_matter_power_interpolator(pars,
                                         nonlinear=True,
                                         hubble_units=False,
-                                        k_hunit=False,
+                                        k_hunit=True,
                                         kmax=kmax,
-                                        var1=model.Transfer_Weyl,
-                                        var2=model.Transfer_Weyl,
+                                        var1=model.Transfer_tot,
+                                        var2=model.Transfer_tot,
                                         zmax=zs[-1])
 
 # Have a look at interpolated power spectrum results for a range of redshifts
@@ -533,13 +530,23 @@ def int_3(z, i, j, l, cosmo_pars=dict()):
 
 plt.figure(figsize=(8,5))
 z_equi = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50]
-l_toplot = np.linspace(100,2000,200)
+l = np.linspace(100, 2000, 200)
 
-for z in z_equi:
-    k = (l + (1/2))/r(z)
-    plt.loglog(k, PK.P(z, k), color='mediumpurple')
-plt.xlim([1e-4,kmax])
-plt.xlabel('k Mpc')
-plt.ylabel('$P_\Psi\, Mpc^{-3}$')
-plt.legend(['z=%s'%z for z in z_bin_equi[0]])
-plt.show()
+# for z in z_equi:
+#     k = (l + (1/2))/r(z)
+#     plt.loglog(k, PK.P(z, k), color='mediumpurple')
+# plt.xlim([1e-4,kmax])
+# plt.xlabel('k Mpc')
+# plt.ylabel('$P_\Psi\, Mpc^{-3}$')
+# plt.legend(['z=%s'%z for z in z_bin_equi[0]])
+# plt.show()
+
+# plt.figure(figsize=(8,5))
+# k = np.exp(np.log(10)*np.linspace(-4, 7, 200))
+# for z in z_bin_equi[0]:
+#     plt.loglog(k, PK.P(z, k), color='mediumpurple')
+# plt.xlim([1e-4,kmax])
+# plt.xlabel('Wave-number k (h/Mpc)')
+# plt.ylabel('$P_k, Mpc^3$')
+# plt.legend(['z=%s'%z for z in z_bin_equi[0]])
+# plt.show()
