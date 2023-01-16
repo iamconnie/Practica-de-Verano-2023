@@ -372,13 +372,13 @@ df_1.to_csv('Bin_number_d.txt', sep='\t')
 
 # Plotting matter power spectrum
 
-plt.figure(figsize=(8, 5))
-for i, (redshift, line) in enumerate(zip(z_bin_equi[0], ['-', '--'])):
-    plt.loglog(kh_nonlin, pk_nonlin[i, :], color='r', ls=line)
-plt.xlabel('k/h Mpc')
-plt.legend(['linear','non-linear'], loc='lower left')
-plt.title('Matter power at z=%s and z= %s'%tuple(z_bin_equi[0]))
-plt.show()
+# plt.figure(figsize=(8, 5))
+# for i, (redshift, line) in enumerate(zip(z_bin_equi[0], ['-', '--'])):
+#     plt.loglog(kh_nonlin, pk_nonlin[i, :], color='r', ls=line)
+# plt.xlabel('k/h Mpc')
+# plt.legend(['linear','non-linear'], loc='lower left')
+# plt.title('Matter power at z=%s and z= %s'%tuple(z_bin_equi[0]))
+# plt.show()
 
 # For calculating large-scale structure and lensing results yourself,
 # get a power spectrum interpolation object.
@@ -417,18 +417,19 @@ PK = camb.get_matter_power_interpolator(pars,
 # Expect linear potentials to decay a bit when Lambda becomes important,
 # and change from non-linear growth
 
-plt.figure(figsize=(8,5))
+# plt.figure(figsize=(8,5))
 
-k = (l + (1/2))/r(z)
-l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012]
-zplot = [0, 0.5, 1, 4 ,20]
-for z in zplot:
-    plt.loglog(k, PK.P(z, k), color='mediumpurple')
-plt.xlim([1e-4,kmax])
-plt.xlabel('k Mpc')
-plt.ylabel('$P_\Psi\, Mpc^{-3}$')
-plt.legend(['z=%s'%z for z in zplot]);
-plt.show()
+# l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012]
+
+# for l in l_toplot:
+#     k = (l + (1/2))/r(z)
+#     for z in z_bin_equi[0]:
+#         plt.loglog(k, PK.P(z, k), color='mediumpurple')
+# plt.xlim([1e-4,kmax])
+# plt.xlabel('k Mpc')
+# plt.ylabel('$P_\Psi\, Mpc^{-3}$')
+# plt.legend(['z=%s'%z for z in z_bin_equi[0]])
+# plt.show()
 
 # Calculation of Cosmic shear power spectrum:
 
@@ -458,19 +459,19 @@ def C(l, i, j, cosmo_pars=dict()):
 
 # FOR INDIVIDUAL I J
 
-start_1 = time.time()
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
-i, j = 2, 9 
-for l in l_toplot:
-    ax.scatter(l, C(l, i, j))
-ax.set_xlabel('Multipole l')
-ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
-# ax.legend(['z=%s'%z for z in zplot])
-end_1 = time.time()
+# start_1 = time.time()
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
+# i, j = 2, 9 
+# for l in l_toplot:
+#     ax.scatter(l, C(l, i, j))
+# ax.set_xlabel('Multipole l')
+# ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
+# # ax.legend(['z=%s'%z for z in zplot])
+# end_1 = time.time()
 
-print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
-plt.show()
+# print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
+# plt.show()
 
 
 
@@ -526,7 +527,20 @@ def int_3(z, i, j, l, cosmo_pars=dict()):
     I1 = K_yy(z, i, j, cosmo_pars)*PK.P(z, k)
     I2 = K_Iy(z, i, j, cosmo_pars)*P_DI(z, k)
     I3 = K_II(z, i, j, cosmo_pars)*P_II(z, k)
+    return I1 + I2 + I3
 
 
 
+plt.figure(figsize=(8,5))
+z_equi = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50]
+l_toplot = np.linspace(100, 400, 200)
+for z in z_equi:
+    k = np.exp(np.log(10)*(l_toplot + (1/2))/r(z))
+    plt.loglog(k, PK.P(z, k), color='mediumpurple')
+    plt.xlim([1e-4,kmax])
+    plt.xlabel('k Mpc')
+    plt.ylabel('$P_\Psi\, Mpc^{-3}$')
+    plt.legend(['z=%s'%z for z in z_equi])
+plt.show()
 
+np.exp(np.log(10)*np.linspace(-4,2,200))
