@@ -533,14 +533,13 @@ def int_3(z, i, j, l, cosmo_pars=dict()):
 
 plt.figure(figsize=(8,5))
 z_equi = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50]
-l_toplot = np.linspace(100, 400, 200)
-for z in z_equi:
-    k = np.exp(np.log(10)*(l_toplot + (1/2))/r(z))
-    plt.loglog(k, PK.P(z, k), color='mediumpurple')
-    plt.xlim([1e-4,kmax])
-    plt.xlabel('k Mpc')
-    plt.ylabel('$P_\Psi\, Mpc^{-3}$')
-    plt.legend(['z=%s'%z for z in z_equi])
-plt.show()
+l_toplot = np.linspace(100,2000,200)
 
-np.exp(np.log(10)*np.linspace(-4,2,200))
+for z in z_equi:
+    k = (l + (1/2))/r(z)
+    plt.loglog(k, PK.P(z, k), color='mediumpurple')
+plt.xlim([1e-4,kmax])
+plt.xlabel('k Mpc')
+plt.ylabel('$P_\Psi\, Mpc^{-3}$')
+plt.legend(['z=%s'%z for z in z_bin_equi[0]])
+plt.show()
