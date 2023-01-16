@@ -177,44 +177,44 @@ ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
 
 # Angular diameter distance to an object redshift z plot
 
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-for z in z_arr:
-    ax.scatter(z, D(z), s=1.0, label='$D_A(z)$', color='mediumpurple')
-ax.set_xlabel('Redshift $z$')
-ax.set_ylabel('$D_A(z)$')
-ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# for z in z_arr:
+#     ax.scatter(z, D(z), s=1.0, label='$D_A(z)$', color='mediumpurple')
+# ax.set_xlabel('Redshift $z$')
+# ax.set_ylabel('$D_A(z)$')
+# ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
 # plt.show()
 
 # now using CAMB parameters
 
 # Proper distance dependent on redshift plot
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-ax.plot(z_arr, E_arb(z_arr, params_CAMB), label='$E(z)$', color='mediumpurple')
-ax.set_xlabel('Redshift $z$')
-ax.set_ylabel('$E(z)$')
-ax.set_title('Proper distance $E(z) as a function of redshift $z$')
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# ax.plot(z_arr, E_arb(z_arr, params_CAMB), label='$E(z)$', color='mediumpurple')
+# ax.set_xlabel('Redshift $z$')
+# ax.set_ylabel('$E(z)$')
+# ax.set_title('Proper distance $E(z) as a function of redshift $z$')
 # plt.show()
 
 # Comoving distance to an object redshift z plot
 
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-for z in z_arr:
-    ax.scatter(z, r(z, params_CAMB), s=1.0, label='$r(z)$',
-               color='mediumpurple')
-ax.set_xlabel('Redshift $z$')
-ax.set_ylabel('$Comoving distance r(z)$')
-ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# for z in z_arr:
+#     ax.scatter(z, r(z, params_CAMB), s=1.0, label='$r(z)$',
+#                color='mediumpurple')
+# ax.set_xlabel('Redshift $z$')
+# ax.set_ylabel('$Comoving distance r(z)$')
+# ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
 # plt.show()
 
 # Angular diameter distance to an object redshift z plot
 
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-for z in z_arr:
-    ax.scatter(z, D(z, params_CAMB), s=1.0, label='$D_A(z)$',
-               color='mediumpurple')
-ax.set_xlabel('Redshift $z$')
-ax.set_ylabel('$D_A(z)$')
-ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# for z in z_arr:
+#     ax.scatter(z, D(z, params_CAMB), s=1.0, label='$D_A(z)$',
+#                color='mediumpurple')
+# ax.set_xlabel('Redshift $z$')
+# ax.set_ylabel('$D_A(z)$')
+# ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
 # plt.show()
 
 
@@ -364,20 +364,20 @@ for i in range(len(z_bin_equi[0])):
     list = []
     for z in z_bin[0]:
         list.append([n_i(z, i), z])
-    df_1 = pd.DataFrame(list, columns=['bin number density'])
+    df_1 = pd.DataFrame(list, columns=['bin number density', 'z'])
 
 df_1.to_csv('Bin_number_d.txt', sep='\t')
 
 
 
 # Plotting matter power spectrum
-plt.figure(figsize=(8,5))
-for i, (redshift, line) in enumerate(zip(limits, ['-', '--'])):
-    plt.loglog(kh, pk[i, :], color='k', ls = line)
+
+plt.figure(figsize=(8, 5))
+for i, (redshift, line) in enumerate(zip(z_bin_equi[0], ['-', '--'])):
     plt.loglog(kh_nonlin, pk_nonlin[i, :], color='r', ls=line)
 plt.xlabel('k/h Mpc')
 plt.legend(['linear','non-linear'], loc='lower left')
-plt.title('Matter power at z=%s and z= %s'%tuple(limits))
+plt.title('Matter power at z=%s and z= %s'%tuple(z_bin_equi[0]))
 plt.show()
 
 # For calculating large-scale structure and lensing results yourself,
@@ -418,15 +418,17 @@ PK = camb.get_matter_power_interpolator(pars,
 # and change from non-linear growth
 
 plt.figure(figsize=(8,5))
-k=np.exp(np.log(10)*np.linspace(-4,2,200))
+
+k = (l + (1/2))/r(z)
+l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012]
 zplot = [0, 0.5, 1, 4 ,20]
 for z in zplot:
-    plt.loglog(k, PK.P(z,k))
+    plt.loglog(k, PK.P(z, k), color='mediumpurple')
 plt.xlim([1e-4,kmax])
 plt.xlabel('k Mpc')
 plt.ylabel('$P_\Psi\, Mpc^{-3}$')
 plt.legend(['z=%s'%z for z in zplot]);
-# plt.show()
+plt.show()
 
 # Calculation of Cosmic shear power spectrum:
 
@@ -440,7 +442,7 @@ def Weight_F(z, i, cosmo_pars=dict()):
     return cte*(1 + z)*r(z, cosmo_pars)*Window_F(z, i)
 
 
-def int_2(z, i, j, cosmo_pars=dict()):
+def int_2(z, i, j, l, cosmo_pars=dict()):
     I1 = (Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))/(E(z, cosmo_pars)*(r(z, cosmo_pars)**2))
     k = (l + (1/2))/r(z, cosmo_pars)
     PMS = PK.P(z, k)
@@ -451,24 +453,80 @@ def C(l, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     c = const.c.value
     cte = (c/H0)
-    I1 = integrate.quad(int_2, limits[0], limits[1], args=(i, j, cosmo_pars))[0]
+    I1 = integrate.quad(int_2, limits[0], limits[1], args=(i, j, l, cosmo_pars))[0]
     return cte*I1
 
+# FOR INDIVIDUAL I J
 
 start_1 = time.time()
 fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-k = np.exp(np.log(10)*np.linspace(-4, 2, 200))
 l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
 i, j = 2, 9 
 for l in l_toplot:
     ax.scatter(l, C(l, i, j))
 ax.set_xlabel('Multipole l')
-ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i),str(j)))
+ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
 # ax.legend(['z=%s'%z for z in zplot])
 end_1 = time.time()
 
 print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
 plt.show()
-    
+
+
+
+
+# Compact Notation with Kernel functions
+
+def K_yy(z, i, j, cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    c = const.c.value
+    cte = (H0/c)**3
+    term_1 = ((3/2)*Om*(1*z))**2
+    term_2 = (Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))/E(z, cosmo_pars)
+    return term_1*cte*term_2
+
+
+def K_Iy(z, i, j, cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    c = const.c.value
+    cte = (H0/c)**3
+    term_1 = ((3/2)*Om*(1*z))
+    term_2 = ((n_i(z, i)*Weight_F(z, j, cosmo_pars)) + (n_i(z, j)*Weight_F(z, i, cosmo_pars)))/tilde_r(z, cosmo_pars)
+    return term_1*cte*term_2
+
+
+def K_II(z, i, j, cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    c = const.c.value
+    cte = (H0/c)**3
+    term_1 = (n_i(z, i)*n_i(z, j)*E(z, cosmo_pars))/(tilde_r(z, cosmo_pars)**2)
+    return term_1*cte
+
+
+def P_DI(z, k, cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    A_ia = 1.72
+    C_ia = 0.0134
+    cte = -A_ia*C_ia*Om
+    term_1 = 1/D(z, cosmo_pars)
+    return cte*term_1*PK.P(z, k)
+
+
+def P_II(z, k, cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    A_ia = 1.72
+    C_ia = 0.0134
+    cte = -A_ia*C_ia*Om
+    term_1 = 1/D(z, cosmo_pars)
+    return ((cte*term_1)**2)*PK.P(z, k)
+
+
+def int_3(z, i, j, l, cosmo_pars=dict()):
+    k = (l + (1/2))/r(z, cosmo_pars)
+    I1 = K_yy(z, i, j, cosmo_pars)*PK.P(z, k)
+    I2 = K_Iy(z, i, j, cosmo_pars)*P_DI(z, k)
+    I3 = K_II(z, i, j, cosmo_pars)*P_II(z, k)
+
+
 
 
