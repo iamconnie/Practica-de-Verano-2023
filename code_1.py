@@ -11,6 +11,8 @@ import time
 from camb import model
 import pandas as pd
 from astropy import constants as const
+import scipy.interpolate as interpolate
+
 
 # instalacion de camb
 camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
@@ -123,7 +125,7 @@ def f_integral(z, cosmo_pars=dict()):
 
 def r(z, cosmo_pars=dict()):
     """r calcula comoving distnace to an objecto redshift"""
-    c = const.c.value
+    c = const.c.value / 1000
     cte = c/params_P18['H0']  # h^-1 Mpc
     int = integrate.quad(f_integral, 0, z, args=cosmo_pars)
     r = cte*int[0]
@@ -136,7 +138,7 @@ def r(z, cosmo_pars=dict()):
 def D(z, cosmo_pars=dict()):
     """La funcion D calcula transverse comoving distance para los distintos
     casos de el parametro Omgea_K_0"""
-    c = const.c.value
+    c = const.c.value / 1000
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     cte_1 = c/H0
     cte_2 = H0/c
@@ -223,8 +225,9 @@ ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
 # Bin creation
 
 z_bin = binned_statistic(z_arr, z_arr, bins=100)
-z_bin_equi = binned_statistic(z_arr, z_arr, bins=10)
+z_bin_equi = binned_statistic(z_arr, z_arr, bins=11)
 limits = [z_bin.bin_edges[0], z_bin.bin_edges[-1]]
+z_equi = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50] # This are the values from the paper
 
 # Parameters adopted to describe the photometric redshift distribution source
 
@@ -242,7 +245,7 @@ PRD['fout'] = 0.1
 
 
 def tilde_r(z, cosmo_pars=dict()):
-    c = const.c.value
+    c = const.c.value / 1000
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     cte = c/H0
     return r(z, cosmo_pars)/cte
@@ -296,15 +299,7 @@ def n_i(z, i):
 
     return I1/I2
 
-# Window Function
 
-
-def W_int(z_1, z, i):
-    return n_i(z_1, i)*(1-(tilde_r(z)/tilde_r(z_1)))
-
-
-def Window_F(z, i):
-    return integrate.quad(W_int, z, limits[1], args=(z, i))[0]
 
 
 # Window function for an specific bin for redshift
@@ -348,7 +343,6 @@ kh_nonlin, z_nonlin, pk_nonlin = results.get_matter_power_spectrum(minkh=1e-4,
 
 # Storage power matter parameters
 
-
 list_of_PMS = list(zip(kh, z, pk, kh_nonlin, z_nonlin, pk_nonlin))
  
 # Converting lists of tuples into
@@ -363,17 +357,113 @@ df.to_csv('PMS_params.txt', sep='\t')
 # Storage number density
 
 
-for i in range(len(z_bin[0])):
-    list = []
-    for z in z_bin[0]:
-        list.append([n_i(z, i), z])
-    df_1 = pd.DataFrame(list, columns=['bin number density', 'z'])
+# lst_1 = []
+# for z in z_bin[0]:
+#     lst_1.append([z, n_i(z, 1)])
+# n_1 = pd.DataFrame(lst_1)
+# n_1.to_csv('Bin_number_d_1.txt', sep='\t')
 
-df_1.to_csv('Bin_number_d.txt', sep='\t')
+# lst_2 = []
+# for z in z_bin[0]:
+#     lst_2.append([z, n_i(z, 2)])
+# n_2 = pd.DataFrame(lst_2)
+# n_2.to_csv('Bin_number_d_2.txt', sep='\t')
+
+# lst_3 = []
+# for z in z_bin[0]:
+#     lst_3.append([z, n_i(z, 3)])
+# n_3 = pd.DataFrame(lst_3)
+# n_3.to_csv('Bin_number_d_3.txt', sep='\t')
+
+# lst_4 = []
+# for z in z_bin[0]:
+#     lst_4.append([z, n_i(z, 4)])
+# n_4 = pd.DataFrame(lst_4)
+# n_4.to_csv('Bin_number_d_4.txt', sep='\t')
+
+# lst_5 = []
+# for z in z_bin[0]:
+#     lst_5.append([z, n_i(z, 5)])
+# n_5 = pd.DataFrame(lst_5)
+# n_5.to_csv('Bin_number_d_5.txt', sep='\t')
+
+# lst_6 = []
+# for z in z_bin[0]:
+#     lst_6.append([z, n_i(z, 6)])
+# n_6 = pd.DataFrame(lst_6)
+# n_6.to_csv('Bin_number_d_6.txt', sep='\t')
+
+# lst_7 = []
+# for z in z_bin[0]:
+#     lst_7.append([z, n_i(z, 7)])
+# n_7 = pd.DataFrame(lst_7)
+# n_7.to_csv('Bin_number_d_7.txt', sep='\t')
+
+# lst_8 = []
+# for z in z_bin[0]:
+#     lst_1.append([z, n_i(z, 8)])
+# n_8 = pd.DataFrame(lst_8)
+# n_8.to_csv('Bin_number_d_8.txt', sep='\t')
+
+# lst_9 = []
+# for z in z_bin[0]:
+#     lst_9.append([z, n_i(z, 9)])
+# n_9 = pd.DataFrame(lst_9)
+# n_9.to_csv('Bin_number_d_9.txt', sep='\t')
+
+# lst_10 = []
+# for z in z_bin[0]:
+#     lst_10.append([z, n_i(z, 10)])
+# n_10 = pd.DataFrame(lst_10)
+# n_10.to_csv('Bin_number_d_10.txt', sep='\t')
+
+# lst_n_i = dict()
+
+# lst_n_i["bin_1"] = lst_1
+# lst_n_i["bin_2"] = lst_2
+# lst_n_i["bin_3"] = lst_3
+# lst_n_i["bin_4"] = lst_4
+# lst_n_i["bin_5"] = lst_5
+# lst_n_i["bin_6"] = lst_6
+# lst_n_i["bin_7"] = lst_7
+# lst_n_i["bin_8"] = lst_8
+# lst_n_i["bin_9"] = lst_9
+# lst_n_i["bin_10"] = lst_10
 
 
+for i in range(len(z_equi)):
+   list = []
+   for z in z_bin[0]:
+       list.append([z, n_i(z, i)])
+   np.savetxt('bin_ndensity/bin_%s'%(str(i)), np.array(list))
 
 
+dict_ndsty = {}
+
+# Interpolating the bin_number_density
+for i in range(10):
+    dict_ndsty['ndensity_file%s'%(str(i))] = np.loadtxt('bin_ndensity/bin_%s'%(str(i)))
+    dict_ndsty['bin_ndensity_%s'%(str(i))] = interpolate.interp1d(dict_ndsty['ndensity_file%s'%(str(i))][:,0], dict_ndsty['ndensity_file%s'%(str(i))][:,1])
+
+
+# Window Function
+
+def W_int(z_1, z, i):
+    return dict_ndsty['bin_ndensity_%s'%(str(i))](z_1)*(1-(tilde_r(z)/tilde_r(z_1)))
+
+
+def Window_F(z, i):
+    return integrate.quad(W_int, z, limits[1], args=(z, i))[0]
+
+
+fig, ax = plt.subplots()
+
+for i in range(10):
+    ax.plot(z_arr, dict_ndsty['bin_ndensity_%s'%(str(i))](z_arr), c='b')
+ax.plot(z_arr, 25*n(z_arr), c='red')
+ax.set_xlabel('Redshift $z$')
+ax.set_ylabel('Number density')
+plt.show()
 
 # Interpolator CAMB
 
@@ -414,28 +504,17 @@ PK = camb.get_matter_power_interpolator(pars,
 # Expect linear potentials to decay a bit when Lambda becomes important,
 # and change from non-linear growth
 
-# plt.figure(figsize=(8,5))
 
-# l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012]
-
-# for l in l_toplot:
-#     k = (l + (1/2))/r(z)
-#     for z in z_bin_equi[0]:
-#         plt.loglog(k, PK.P(z, k), color='mediumpurple')
-# plt.xlim([1e-4,kmax])
-# plt.xlabel('k Mpc')
-# plt.ylabel('$P_\Psi\, Mpc^{-3}$')
-# plt.legend(['z=%s'%z for z in z_bin_equi[0]])
-# plt.show()
 
 # Calculation of Cosmic shear power spectrum:
+
 
 # Weight function
 
 
 def Weight_F(z, i, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value
+    c = const.c.value / 1000
     cte = (3/2)*((H0/c)**2)*Om
     return cte*(1 + z)*r(z, cosmo_pars)*Window_F(z, i)
 
@@ -449,7 +528,7 @@ def int_2(z, i, j, l, cosmo_pars=dict()):
 
 def C(l, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value
+    c = const.c.value / 1000
     cte = (c/H0)
     I1 = integrate.quad(int_2, limits[0], limits[1], args=(i, j, l, cosmo_pars))[0]
     return cte*I1
@@ -477,7 +556,7 @@ def C(l, i, j, cosmo_pars=dict()):
 
 def K_yy(z, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value
+    c = const.c.value / 1000
     cte = (H0/c)**3
     term_1 = ((3/2)*Om*(1*z))**2
     term_2 = (Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))/E(z, cosmo_pars)
@@ -486,7 +565,7 @@ def K_yy(z, i, j, cosmo_pars=dict()):
 
 def K_Iy(z, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value
+    c = const.c.value / 1000
     cte = (H0/c)**3
     term_1 = ((3/2)*Om*(1*z))
     term_2 = ((n_i(z, i)*Weight_F(z, j, cosmo_pars)) + (n_i(z, j)*Weight_F(z, i, cosmo_pars)))/tilde_r(z, cosmo_pars)
@@ -495,7 +574,7 @@ def K_Iy(z, i, j, cosmo_pars=dict()):
 
 def K_II(z, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value
+    c = const.c.value / 1000
     cte = (H0/c)**3
     term_1 = (n_i(z, i)*n_i(z, j)*E(z, cosmo_pars))/(tilde_r(z, cosmo_pars)**2)
     return term_1*cte
@@ -528,18 +607,6 @@ def int_3(z, i, j, l, cosmo_pars=dict()):
 
 
 
-plt.figure(figsize=(8,5))
-z_equi = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50]
-l = np.linspace(100, 2000, 200)
-
-# for z in z_equi:
-#     k = (l + (1/2))/r(z)
-#     plt.loglog(k, PK.P(z, k), color='mediumpurple')
-# plt.xlim([1e-4,kmax])
-# plt.xlabel('k Mpc')
-# plt.ylabel('$P_\Psi\, Mpc^{-3}$')
-# plt.legend(['z=%s'%z for z in z_bin_equi[0]])
-# plt.show()
 
 # plt.figure(figsize=(8,5))
 # k = np.exp(np.log(10)*np.linspace(-4, 7, 200))
