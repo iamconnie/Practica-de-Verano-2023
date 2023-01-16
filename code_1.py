@@ -223,6 +223,8 @@ ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
 # Bin creation
 
 z_bin = binned_statistic(z_arr, z_arr, bins=100)
+z_bin_equi = binned_statistic(z_arr, z_arr, bins=10)
+limits = [z_bin.bin_edges[0], z_bin.bin_edges[-1]]
 
 # Parameters adopted to describe the photometric redshift distribution source
 
@@ -290,7 +292,7 @@ def n_i(z, i):
     I1 = integrate.quad(int_1, z_bin.bin_edges[i],
                         z_bin.bin_edges[i+1], args=z)[0]
     I2 = integrate.nquad(int_1, [[z_bin.bin_edges[i], z_bin.bin_edges[i+1]],
-                         [z_bin.bin_edges[0], z_bin.bin_edges[-1]]])[0]
+                         [limits[0], limits[1]]])[0]
 
     return I1/I2
 
@@ -302,7 +304,7 @@ def W_int(z_1, z, i):
 
 
 def Window_F(z, i):
-    return integrate.quad(W_int, z, z_bin.bin_edges[-1], args=(z, i))[0]
+    return integrate.quad(W_int, z, limits[1], args=(z, i))[0]
 
 
 # Window function for an specific bin for redshift
@@ -358,7 +360,15 @@ df = pd.DataFrame(list_of_PMS,
 # Print data.
 df.to_csv('PMS_params.txt', sep='\t')
 
-limits = [z_bin.bin_edges[0], z_bin.bin_edges[-1]]
+for i in range(len(z_bin_equi[0])):
+    list = []
+    for z in z_bin[0]:
+        list.append([n_i(z, i), z])
+    df_1 = pd.DataFrame(list, columns=['bin number density'])
+
+df_1.to_csv('Bin_number_d.txt', sep='\t')
+
+
 
 # Plotting matter power spectrum
 plt.figure(figsize=(8,5))
