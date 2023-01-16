@@ -163,7 +163,7 @@ ax.plot(z_arr, E_arb(z_arr), label='$E(z)$', color='mediumpurple')
 ax.set_xlabel('Redshift $z$')
 ax.set_ylabel('$E(z)$')
 ax.set_title('Proper distance $E(z) as a function of redshift $z$')
-plt.show()
+# plt.show()
 
 # Comoving distance to an object redshift z plot
 
@@ -173,7 +173,7 @@ for z in z_arr:
 ax.set_xlabel('Redshift $z$')
 ax.set_ylabel('$Comoving distance r(z)$')
 ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
-plt.show()
+# plt.show()
 
 # Angular diameter distance to an object redshift z plot
 
@@ -183,7 +183,7 @@ for z in z_arr:
 ax.set_xlabel('Redshift $z$')
 ax.set_ylabel('$D_A(z)$')
 ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
-plt.show()
+# plt.show()
 
 # now using CAMB parameters
 
@@ -222,7 +222,7 @@ ax.set_title('Angular diameter distance $D_a(z)$ as a function of redshift $z$')
 
 # Bin creation
 
-z_bin = binned_statistic(z_arr, z_arr, bins=10)
+z_bin = binned_statistic(z_arr, z_arr, bins=100)
 
 # Parameters adopted to describe the photometric redshift distribution source
 
@@ -306,17 +306,17 @@ def Window_F(z, i):
 
 
 # Window function for an specific bin for redshift
-start = time.time()
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-for z in z_arr:
-    ax.scatter(z, Window_F(z, 10), s=2.0, label='$Window Function(z)$',
-               color='mediumpurple')
-ax.set_xlabel('Redshift $z$')
-ax.set_ylabel('Window Function $\tilde{W}_{10}(z)$')
-ax.set_title('Window function for an specific bin $\tilde{W}(z)$ as a function of redshift $z$')
-end = time.time()
+# start = time.time()
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# for z in z_arr:
+#     ax.scatter(z, Window_F(z, 10), s=2.0, label='$Window Function(z)$',
+#                color='mediumpurple')
+# ax.set_xlabel('Redshift $z$')
+# ax.set_ylabel('Window Function $\tilde{W}_{10}(z)$')
+# ax.set_title('Window function for an specific bin $\tilde{W}(z)$ as a function of redshift $z$')
+# end = time.time()
 
-print("El tiempo que se demoró es "+str(end-start)+" segundos")
+# print("El tiempo que se demoró es "+str(end-start)+" segundos")
 # plt.show()
 
 
@@ -358,16 +358,17 @@ df = pd.DataFrame(list_of_PMS,
 # Print data.
 df.to_csv('PMS_params.txt', sep='\t')
 
+limits = [z_bin.bin_edges[0], z_bin.bin_edges[-1]]
 
 # Plotting matter power spectrum
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-for i, (redshift, line) in enumerate(zip(z_bin[0], ['-', '--'])):
-    ax.loglog(kh, pk[i, :], color='k', ls = line)
-    ax.loglog(kh_nonlin, pk_nonlin[i, :], color='r', ls=line)
-ax.xlabel('k/h Mpc')
-ax.legend(['linear','non-linear'], loc='lower left')
-ax.title('Matter power at z=%s and z= %s'%tuple(z_bin[0]))
-# plt.show()
+plt.figure(figsize=(8,5))
+for i, (redshift, line) in enumerate(zip(limits, ['-', '--'])):
+    plt.loglog(kh, pk[i, :], color='k', ls = line)
+    plt.loglog(kh_nonlin, pk_nonlin[i, :], color='r', ls=line)
+plt.xlabel('k/h Mpc')
+plt.legend(['linear','non-linear'], loc='lower left')
+plt.title('Matter power at z=%s and z= %s'%tuple(limits))
+plt.show()
 
 # For calculating large-scale structure and lensing results yourself,
 # get a power spectrum interpolation object.
@@ -406,15 +407,15 @@ PK = camb.get_matter_power_interpolator(pars,
 # Expect linear potentials to decay a bit when Lambda becomes important,
 # and change from non-linear growth
 
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-k = np.exp(np.log(10)*np.linspace(-4, 2, 200))
-zplot = [0, 0.5, 1, 4, 20] # segun yo se plotea z_arr o la lista de los bins
+plt.figure(figsize=(8,5))
+k=np.exp(np.log(10)*np.linspace(-4,2,200))
+zplot = [0, 0.5, 1, 4 ,20]
 for z in zplot:
-    ax.loglog(k, PK.P(z, k))
-ax.xlim([1e-4,kmax])
-ax.xlabel('k Mpc')
-ax.ylabel('$P_\Psi\, Mpc^{-3}$')
-ax.legend(['z=%s'%z for z in zplot])
+    plt.loglog(k, PK.P(z,k))
+plt.xlim([1e-4,kmax])
+plt.xlabel('k Mpc')
+plt.ylabel('$P_\Psi\, Mpc^{-3}$')
+plt.legend(['z=%s'%z for z in zplot]);
 # plt.show()
 
 # Calculation of Cosmic shear power spectrum:
@@ -425,41 +426,39 @@ ax.legend(['z=%s'%z for z in zplot])
 def Weight_F(z, i, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     c = const.c.value
-    cte = (3/2)*((H0/c)**2)
-    return cte*params_CAMB['Om']*(1 + z)*r(z, cosmo_pars)*Window_F(z, i)
-
-
-
-
-
+    cte = (3/2)*((H0/c)**2)*Om
+    return cte*(1 + z)*r(z, cosmo_pars)*Window_F(z, i)
 
 
 def int_2(z, i, j, cosmo_pars=dict()):
     I1 = (Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))/(E(z, cosmo_pars)*(r(z, cosmo_pars)**2))
-    return I1
+    k = (l + (1/2))/r(z, cosmo_pars)
+    PMS = PK.P(z, k)
+    return I1*PMS
 
 
-def C(l, z, i, j, cosmo_pars=dict()):
+def C(l, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     c = const.c.value
     cte = (c/H0)
-    I1 = integrate.quad(int_2, z_bin[0], z_bin[-1], args=(i, j, cosmo_pars))
-    k = (l + (1/2))/r(z, cosmo_pars)
-    PMS = PK.P(z, k)
-    return cte*I1*PMS
+    I1 = integrate.quad(int_2, limits[0], limits[1], args=(i, j, cosmo_pars))[0]
+    return cte*I1
 
 
-
+start_1 = time.time()
 fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
 k = np.exp(np.log(10)*np.linspace(-4, 2, 200))
-l_toplot = [97, 138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
+l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
+i, j = 2, 9 
 for l in l_toplot:
-    ax.loglog(l, C(l, ))
-ax.xlim([1e-4,kmax])
-ax.xlabel('k Mpc')
-ax.ylabel('$P_\Psi\, Mpc^{-3}$')
-ax.legend(['z=%s'%z for z in zplot])
-# plt.show()
+    ax.scatter(l, C(l, i, j))
+ax.set_xlabel('Multipole l')
+ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i),str(j)))
+# ax.legend(['z=%s'%z for z in zplot])
+end_1 = time.time()
+
+print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
+plt.show()
     
 
 
