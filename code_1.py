@@ -225,7 +225,7 @@ ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
 # Bin creation
 
 z_bin = binned_statistic(z_arr, z_arr, bins=100)
-z_bin_equi = binned_statistic(z_arr, z_arr, bins=11)
+z_bin_equi = binned_statistic(z_arr, z_arr, bins=10)
 limits = [z_bin.bin_edges[0], z_bin.bin_edges[-1]]
 z_equi = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50] # This are the values from the paper
 
@@ -257,7 +257,7 @@ def n(z):
     zm = 0.9  # median redshift, value given by Euclid Red Book
     z0 = zm/(np.sqrt(2))
     frac = z/z0
-    return (frac**2)*np.exp(-frac**(3/2))
+    return (frac**2)*np.exp(-(frac)**(3/2))
 
 
 # Photometric redshift ditribution of sources
@@ -290,11 +290,16 @@ def int_1(zp, z):
 
 # FUNCIONES MOMENTANEAS DEBO CORREGIR Y REVISARLAS
 
+z_equipop_bins = [(0.001, 0.42), (0.42, 0.56), (0.56, 0.68), (0.68, 0.79), (0.79, 0.90),
+                    (0.90, 1.02), (1.02, 1.15) ,(1.15, 1.32), (1.32, 1.58), (1.58, 2.50)]
+
 
 def n_i(z, i):
-    I1 = integrate.quad(int_1, z_bin.bin_edges[i],
-                        z_bin.bin_edges[i+1], args=z)[0]
-    I2 = integrate.nquad(int_1, [[z_bin.bin_edges[i], z_bin.bin_edges[i+1]],
+    ith_bin = z_equipop_bins[i]
+    zi_l, zi_u = ith_bin
+    I1 = integrate.quad(int_1, zi_l,
+                        zi_u, args=z)[0]
+    I2 = integrate.nquad(int_1, [[zi_l, zi_u],
                          [limits[0], limits[1]]])[0]
 
     return I1/I2
@@ -356,100 +361,113 @@ df.to_csv('PMS_params.txt', sep='\t')
 
 # Storage number density
 
+z_list = z_bin[1]
 
-# lst_1 = []
-# for z in z_bin[0]:
-#     lst_1.append([z, n_i(z, 1)])
-# n_1 = pd.DataFrame(lst_1)
-# n_1.to_csv('Bin_number_d_1.txt', sep='\t')
+lst_0 = []
+for z in z_list:
+    lst_0.append([z, n_i(z, 0)])
+n_0 = pd.DataFrame(lst_0)
+n_0.to_csv('Bin_number_d_0.txt', sep='\t')
 
-# lst_2 = []
-# for z in z_bin[0]:
-#     lst_2.append([z, n_i(z, 2)])
-# n_2 = pd.DataFrame(lst_2)
-# n_2.to_csv('Bin_number_d_2.txt', sep='\t')
+lst_1 = []
+for z in z_list:
+    lst_1.append([z, n_i(z, 1)])
+n_1 = pd.DataFrame(lst_1)
+n_1.to_csv('Bin_number_d_1.txt', sep='\t')
 
-# lst_3 = []
-# for z in z_bin[0]:
-#     lst_3.append([z, n_i(z, 3)])
-# n_3 = pd.DataFrame(lst_3)
-# n_3.to_csv('Bin_number_d_3.txt', sep='\t')
+lst_2 = []
+for z in z_list:
+    lst_2.append([z, n_i(z, 2)])
+n_2 = pd.DataFrame(lst_2)
+n_2.to_csv('Bin_number_d_2.txt', sep='\t')
 
-# lst_4 = []
-# for z in z_bin[0]:
-#     lst_4.append([z, n_i(z, 4)])
-# n_4 = pd.DataFrame(lst_4)
-# n_4.to_csv('Bin_number_d_4.txt', sep='\t')
+lst_3 = []
+for z in z_list:
+    lst_3.append([z, n_i(z, 3)])
+n_3 = pd.DataFrame(lst_3)
+n_3.to_csv('Bin_number_d_3.txt', sep='\t')
 
-# lst_5 = []
-# for z in z_bin[0]:
-#     lst_5.append([z, n_i(z, 5)])
-# n_5 = pd.DataFrame(lst_5)
-# n_5.to_csv('Bin_number_d_5.txt', sep='\t')
+lst_4 = []
+for z in z_list:
+    lst_4.append([z, n_i(z, 4)])
+n_4 = pd.DataFrame(lst_4)
+n_4.to_csv('Bin_number_d_4.txt', sep='\t')
 
-# lst_6 = []
-# for z in z_bin[0]:
-#     lst_6.append([z, n_i(z, 6)])
-# n_6 = pd.DataFrame(lst_6)
-# n_6.to_csv('Bin_number_d_6.txt', sep='\t')
+lst_5 = []
+for z in z_list:
+    lst_5.append([z, n_i(z, 5)])
+n_5 = pd.DataFrame(lst_5)
+n_5.to_csv('Bin_number_d_5.txt', sep='\t')
 
-# lst_7 = []
-# for z in z_bin[0]:
-#     lst_7.append([z, n_i(z, 7)])
-# n_7 = pd.DataFrame(lst_7)
-# n_7.to_csv('Bin_number_d_7.txt', sep='\t')
+lst_6 = []
+for z in z_list:
+    lst_6.append([z, n_i(z, 6)])
+n_6 = pd.DataFrame(lst_6)
+n_6.to_csv('Bin_number_d_6.txt', sep='\t')
 
-# lst_8 = []
-# for z in z_bin[0]:
-#     lst_1.append([z, n_i(z, 8)])
-# n_8 = pd.DataFrame(lst_8)
-# n_8.to_csv('Bin_number_d_8.txt', sep='\t')
+lst_7 = []
+for z in z_list:
+    lst_7.append([z, n_i(z, 7)])
+n_7 = pd.DataFrame(lst_7)
+n_7.to_csv('Bin_number_d_7.txt', sep='\t')
 
-# lst_9 = []
-# for z in z_bin[0]:
-#     lst_9.append([z, n_i(z, 9)])
-# n_9 = pd.DataFrame(lst_9)
-# n_9.to_csv('Bin_number_d_9.txt', sep='\t')
+lst_8 = []
+for z in z_list:
+    lst_8.append([z, n_i(z, 8)])
+n_8 = pd.DataFrame(lst_8)
+n_8.to_csv('Bin_number_d_8.txt', sep='\t')
 
-# lst_10 = []
-# for z in z_bin[0]:
-#     lst_10.append([z, n_i(z, 10)])
-# n_10 = pd.DataFrame(lst_10)
-# n_10.to_csv('Bin_number_d_10.txt', sep='\t')
-
-# lst_n_i = dict()
-
-# lst_n_i["bin_1"] = lst_1
-# lst_n_i["bin_2"] = lst_2
-# lst_n_i["bin_3"] = lst_3
-# lst_n_i["bin_4"] = lst_4
-# lst_n_i["bin_5"] = lst_5
-# lst_n_i["bin_6"] = lst_6
-# lst_n_i["bin_7"] = lst_7
-# lst_n_i["bin_8"] = lst_8
-# lst_n_i["bin_9"] = lst_9
-# lst_n_i["bin_10"] = lst_10
+lst_9 = []
+for z in z_list:
+    lst_9.append([z, n_i(z, 9)])
+n_9 = pd.DataFrame(lst_9)
+n_9.to_csv('Bin_number_d_9.txt', sep='\t')
 
 
-for i in range(len(z_equi)):
-   list = []
-   for z in z_bin[0]:
-       list.append([z, n_i(z, i)])
-   np.savetxt('bin_ndensity/bin_%s'%(str(i)), np.array(list))
+lst_n_i = dict()
+
+lst_n_i["bin_0"] = np.array(lst_0)
+lst_n_i["bin_1"] = np.array(lst_1)
+lst_n_i["bin_2"] = np.array(lst_2)
+lst_n_i["bin_3"] = np.array(lst_3)
+lst_n_i["bin_4"] = np.array(lst_4)
+lst_n_i["bin_5"] = np.array(lst_5)
+lst_n_i["bin_6"] = np.array(lst_6)
+lst_n_i["bin_7"] = np.array(lst_7)
+lst_n_i["bin_8"] = np.array(lst_8)
+lst_n_i["bin_9"] = np.array(lst_9)
 
 
-dict_ndsty = {}
 
-# Interpolating the bin_number_density
-for i in range(10):
-    dict_ndsty['ndensity_file%s'%(str(i))] = np.loadtxt('bin_ndensity/bin_%s'%(str(i)))
-    dict_ndsty['bin_ndensity_%s'%(str(i))] = interpolate.interp1d(dict_ndsty['ndensity_file%s'%(str(i))][:,0], dict_ndsty['ndensity_file%s'%(str(i))][:,1])
+interpolate_n_i = dict()
+
+interpolate_n_i["I_0"] = interpolate.interp1d(lst_n_i["bin_0"][:, 0],
+                                              lst_n_i["bin_0"][:, 1])
+interpolate_n_i["I_1"] = interpolate.interp1d(lst_n_i["bin_1"][:, 0],
+                                              lst_n_i["bin_1"][:, 1])                                              
+interpolate_n_i["I_2"] = interpolate.interp1d(lst_n_i["bin_2"][:, 0],
+                                              lst_n_i["bin_2"][:, 1])
+interpolate_n_i["I_3"] = interpolate.interp1d(lst_n_i["bin_3"][:, 0],
+                                              lst_n_i["bin_3"][:, 1])
+interpolate_n_i["I_4"] = interpolate.interp1d(lst_n_i["bin_4"][:, 0],
+                                              lst_n_i["bin_4"][:, 1])
+interpolate_n_i["I_5"] = interpolate.interp1d(lst_n_i["bin_5"][:, 0],
+                                              lst_n_i["bin_5"][:, 1])
+interpolate_n_i["I_6"] = interpolate.interp1d(lst_n_i["bin_6"][:, 0],
+                                              lst_n_i["bin_6"][:, 1])
+interpolate_n_i["I_7"] = interpolate.interp1d(lst_n_i["bin_7"][:, 0],
+                                              lst_n_i["bin_7"][:, 1])
+interpolate_n_i["I_8"] = interpolate.interp1d(lst_n_i["bin_8"][:, 0],
+                                              lst_n_i["bin_8"][:, 1])
+interpolate_n_i["I_9"] = interpolate.interp1d(lst_n_i["bin_9"][:, 0],
+                                              lst_n_i["bin_9"][:, 1])
+
 
 
 # Window Function
 
 def W_int(z_1, z, i):
-    return dict_ndsty['bin_ndensity_%s'%(str(i))](z_1)*(1-(tilde_r(z)/tilde_r(z_1)))
+    return interpolate_n_i['I_%s'%(str(i))](z_1)*(1-(tilde_r(z)/tilde_r(z_1)))
 
 
 def Window_F(z, i):
@@ -459,11 +477,12 @@ def Window_F(z, i):
 fig, ax = plt.subplots()
 
 for i in range(10):
-    ax.plot(z_arr, dict_ndsty['bin_ndensity_%s'%(str(i))](z_arr), c='b')
+    ax.plot(z_arr, interpolate_n_i['I_%s'%(str(i))](z_arr), c='b')
 ax.plot(z_arr, 25*n(z_arr), c='red')
 ax.set_xlabel('Redshift $z$')
 ax.set_ylabel('Number density')
-plt.show()
+fig.show()
+
 
 # Interpolator CAMB
 
