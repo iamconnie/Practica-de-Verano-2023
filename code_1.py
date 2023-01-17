@@ -72,15 +72,13 @@ def Omega_Lambda(Omega_m, Omega_b, Omega_v):
     tenemos, para esto tambien debemos calcular Omega c, un parametro que
     no se utilizara, por lo que no es necesario almacenar"""
     Omega_c = Omega_m - Omega_b
-    OL = 1 - Omega_c - Omega_b - Omega_v
-    return OL
+    return 1 - Omega_c - Omega_b - Omega_v
 
 
 def Omega_K_0(Omega_DE, Omega_m):
     """Omega_K_0 nos entrega este parametro que es depende de Omega DE y
     Omega m, en el caso de del modelo ΛCDM este valor es cero"""
-    OK = 1 - (Omega_DE + Omega_m)
-    return OK
+    return 1 - (Omega_DE + Omega_m)
 
 
 def cosmological_parameters(cosmo_pars=dict()):
@@ -104,15 +102,13 @@ def E_arb(z, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     exp = np.exp(-3*wa*(z/1+z))
     ind = 1 + wa + w0
-    E = np.sqrt(Om*(1+z)**3 + ODE*((1+z)**(3*ind))*exp + Ok*(1+z)**2)
-    return E
+    return np.sqrt(Om*(1+z)**3 + ODE*((1+z)**(3*ind))*exp + Ok*(1+z)**2)
 
 
 def E(z, cosmo_pars=dict()):
     """E es la función E(z) para el caso w0 = -1 y wa = 0"""
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    E = np.sqrt(Om*(1+z)**3 + OL + Ok*(1+z)**2)
-    return E
+    return np.sqrt(Om*(1+z)**3 + OL + Ok*(1+z)**2)
 
 
 # comoving distance to an object redshift z
@@ -120,16 +116,15 @@ def E(z, cosmo_pars=dict()):
 def f_integral(z, cosmo_pars=dict()):
     """f_integral define la funcion dentro de la integral
     ocupada para el calculo de r(z)"""
-    return 1/E_arb(z, cosmo_pars)
+    return 1/E(z, cosmo_pars)
 
 
 def r(z, cosmo_pars=dict()):
     """r calcula comoving distnace to an objecto redshift"""
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     c = const.c.value / 1000
-    cte = c/params_P18['H0']  # h^-1 Mpc
-    int = integrate.quad(f_integral, 0, z, args=cosmo_pars)
-    r = cte*int[0]
-    return r
+    cte = c / H0  # h^-1 Mpc
+    return cte*integrate.quad(f_integral, 0, z, args=cosmo_pars)[0]
 
 
 # transverse comoving distance
@@ -227,7 +222,8 @@ ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
 z_bin = binned_statistic(z_arr, z_arr, bins=100)
 z_bin_equi = binned_statistic(z_arr, z_arr, bins=10)
 limits = [z_bin.bin_edges[0], z_bin.bin_edges[-1]]
-z_equi = [0.0010, 0.42, 0.56, 0.68, 0.79, 0.90, 1.02, 1.15, 1.32, 1.58, 2.50] # This are the values from the paper
+z_equi = [(0.001, 0.42), (0.42, 0.56), (0.56, 0.68), (0.68, 0.79), (0.79, 0.90),
+                    (0.90, 1.02), (1.02, 1.15) ,(1.15, 1.32), (1.32, 1.58), (1.58, 2.50)] # This are the values from the paper
 
 # Parameters adopted to describe the photometric redshift distribution source
 
@@ -288,14 +284,11 @@ def P_ph(zp, z):
 def int_1(zp, z):
     return n(z)*P_ph(zp, z)
 
-# FUNCIONES MOMENTANEAS DEBO CORREGIR Y REVISARLAS
 
-z_equipop_bins = [(0.001, 0.42), (0.42, 0.56), (0.56, 0.68), (0.68, 0.79), (0.79, 0.90),
-                    (0.90, 1.02), (1.02, 1.15) ,(1.15, 1.32), (1.32, 1.58), (1.58, 2.50)]
 
 
 def n_i(z, i):
-    ith_bin = z_equipop_bins[i]
+    ith_bin = z_equi[i]
     zi_l, zi_u = ith_bin
     I1 = integrate.quad(int_1, zi_l,
                         zi_u, args=z)[0]
@@ -399,6 +392,7 @@ df.to_csv('PMS_params.txt', sep='\t')
 #     lst_9.append([z, n_i(z, 9)])
 # np.savetxt('Bin_number_d_9.txt', np.array(lst_9))
 
+# Dictionary of Bin number density
 
 lst_n_i = dict()
 
@@ -414,6 +408,7 @@ lst_n_i["bin_8"] = np.loadtxt("Bin_number_d_8.txt")
 lst_n_i["bin_9"] = np.loadtxt("Bin_number_d_9.txt")
 
 
+# Dictionary of Inerpolation for bin number density
 
 interpolate_n_i = dict()
 
@@ -439,11 +434,11 @@ interpolate_n_i["I_9"] = interpolate.interp1d(lst_n_i["bin_9"][:, 0],
                                               lst_n_i["bin_9"][:, 1])
 
 
-
 # Window Function
 
+
 def W_int(z_1, z, i):
-    return interpolate_n_i['I_%s'%(str(i))](z_1)*(1-(tilde_r(z)/tilde_r(z_1)))
+    return interpolate_n_i['I_%s'%(str(i))](z_1)*(1-tilde_r(z)/tilde_r(z_1))
 
 
 def Window_F(z, i):
@@ -453,18 +448,18 @@ def Window_F(z, i):
 
 
 # Window function for an specific bin for redshift
-start = time.time()
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-for z in z_arr:
-    ax.scatter(z, Window_F(z, 9), s=2.0, label='$Window Function(z)$',
-               color='mediumpurple')
-ax.set_xlabel('Redshift $z$')
-ax.set_ylabel('Window Function $\tilde{W}_{10}(z)$')
-ax.set_title('Window function for an specific bin $\tilde{W}(z)$ as a function of redshift $z$')
-end = time.time()
+# start = time.time()
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# for z in z_arr:
+#     ax.scatter(z, Window_F(z, 1), s=2.0, label='$Window Function(z)$',
+#                color='mediumpurple')
+# ax.set_xlabel('Redshift $z$')
+# ax.set_ylabel('Window Function $\tilde{W}_{1}(z)$')
+# ax.set_title('Window function for an specific bin $\tilde{W}(z)$ as a function of redshift $z$')
+# end = time.time()
 
-print("El tiempo que se demoró es "+str(end-start)+" segundos")
-fig.show()
+# print("El tiempo que se demoró es "+str(end-start)+" segundos")
+# fig.show()
 
 
 # fig, ax = plt.subplots()
@@ -558,20 +553,20 @@ def C(l, i, j, cosmo_pars=dict()):
 
 # FOR INDIVIDUAL I J
 
-# start_1 = time.time()
-# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-# # l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
-# l_toplot = np.arange(100, 300)
-# i, j = 2, 9 
-# for l in l_toplot:
-#     ax.scatter(l, C(l, i, j))
-# ax.set_xlabel('Multipole l')
-# ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
-# # ax.legend(['z=%s'%z for z in zplot])
-# end_1 = time.time()
+start_1 = time.time()
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
+l_toplot = np.arange(100, 300)
+i, j = 2, 9 
+for l in l_toplot:
+    ax.scatter(l, C(l, i, j))
+ax.set_xlabel('Multipole l')
+ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
+# ax.legend(['z=%s'%z for z in zplot])
+end_1 = time.time()
 
-# print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
-# fig.show()
+print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
+fig.show()
 
 
 # Compact Notation with Kernel functions
