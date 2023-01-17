@@ -366,76 +366,67 @@ z_list = z_bin[1]
 lst_0 = []
 for z in z_list:
     lst_0.append([z, n_i(z, 0)])
-n_0 = pd.DataFrame(lst_0)
-n_0.to_csv('Bin_number_d_0.txt', sep='\t')
+np.savetxt('Bin_number_d_0.txt', np.array(lst_0))
+
 
 lst_1 = []
 for z in z_list:
     lst_1.append([z, n_i(z, 1)])
-n_1 = pd.DataFrame(lst_1)
-n_1.to_csv('Bin_number_d_1.txt', sep='\t')
+np.savetxt('Bin_number_d_1.txt', np.array(lst_1))
 
 lst_2 = []
 for z in z_list:
     lst_2.append([z, n_i(z, 2)])
-n_2 = pd.DataFrame(lst_2)
-n_2.to_csv('Bin_number_d_2.txt', sep='\t')
+np.savetxt('Bin_number_d_2.txt', np.array(lst_2))
 
 lst_3 = []
 for z in z_list:
     lst_3.append([z, n_i(z, 3)])
-n_3 = pd.DataFrame(lst_3)
-n_3.to_csv('Bin_number_d_3.txt', sep='\t')
+np.savetxt('Bin_number_d_3.txt', np.array(lst_3))
 
 lst_4 = []
 for z in z_list:
     lst_4.append([z, n_i(z, 4)])
-n_4 = pd.DataFrame(lst_4)
-n_4.to_csv('Bin_number_d_4.txt', sep='\t')
+np.savetxt('Bin_number_d_4.txt', np.array(lst_4))
 
 lst_5 = []
 for z in z_list:
     lst_5.append([z, n_i(z, 5)])
-n_5 = pd.DataFrame(lst_5)
-n_5.to_csv('Bin_number_d_5.txt', sep='\t')
+np.savetxt('Bin_number_d_5.txt', np.array(lst_5))
 
 lst_6 = []
 for z in z_list:
     lst_6.append([z, n_i(z, 6)])
-n_6 = pd.DataFrame(lst_6)
-n_6.to_csv('Bin_number_d_6.txt', sep='\t')
+np.savetxt('Bin_number_d_6.txt', np.array(lst_6))
 
 lst_7 = []
 for z in z_list:
     lst_7.append([z, n_i(z, 7)])
-n_7 = pd.DataFrame(lst_7)
-n_7.to_csv('Bin_number_d_7.txt', sep='\t')
+np.savetxt('Bin_number_d_7.txt', np.array(lst_7))
 
 lst_8 = []
 for z in z_list:
     lst_8.append([z, n_i(z, 8)])
-n_8 = pd.DataFrame(lst_8)
-n_8.to_csv('Bin_number_d_8.txt', sep='\t')
+np.savetxt('Bin_number_d_8.txt', np.array(lst_8))
 
 lst_9 = []
 for z in z_list:
     lst_9.append([z, n_i(z, 9)])
-n_9 = pd.DataFrame(lst_9)
-n_9.to_csv('Bin_number_d_9.txt', sep='\t')
+np.savetxt('Bin_number_d_9.txt', np.array(lst_9))
 
 
 lst_n_i = dict()
 
-lst_n_i["bin_0"] = np.array(lst_0)
-lst_n_i["bin_1"] = np.array(lst_1)
-lst_n_i["bin_2"] = np.array(lst_2)
-lst_n_i["bin_3"] = np.array(lst_3)
-lst_n_i["bin_4"] = np.array(lst_4)
-lst_n_i["bin_5"] = np.array(lst_5)
-lst_n_i["bin_6"] = np.array(lst_6)
-lst_n_i["bin_7"] = np.array(lst_7)
-lst_n_i["bin_8"] = np.array(lst_8)
-lst_n_i["bin_9"] = np.array(lst_9)
+lst_n_i["bin_0"] = np.loadtxt("Bin_number_d_0.txt")
+lst_n_i["bin_1"] = np.loadtxt("Bin_number_d_1.txt")
+lst_n_i["bin_2"] = np.loadtxt("Bin_number_d_2.txt")
+lst_n_i["bin_3"] = np.loadtxt("Bin_number_d_3.txt")
+lst_n_i["bin_4"] = np.loadtxt("Bin_number_d_4.txt")
+lst_n_i["bin_5"] = np.loadtxt("Bin_number_d_5.txt")
+lst_n_i["bin_6"] = np.loadtxt("Bin_number_d_6.txt")
+lst_n_i["bin_7"] = np.loadtxt("Bin_number_d_7.txt")
+lst_n_i["bin_8"] = np.loadtxt("Bin_number_d_8.txt")
+lst_n_i["bin_9"] = np.loadtxt("Bin_number_d_9.txt")
 
 
 
