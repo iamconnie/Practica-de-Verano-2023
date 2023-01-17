@@ -307,21 +307,6 @@ def n_i(z, i):
 
 
 
-# Window function for an specific bin for redshift
-# start = time.time()
-# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-# for z in z_arr:
-#     ax.scatter(z, Window_F(z, 10), s=2.0, label='$Window Function(z)$',
-#                color='mediumpurple')
-# ax.set_xlabel('Redshift $z$')
-# ax.set_ylabel('Window Function $\tilde{W}_{10}(z)$')
-# ax.set_title('Window function for an specific bin $\tilde{W}(z)$ as a function of redshift $z$')
-# end = time.time()
-
-# print("El tiempo que se demoró es "+str(end-start)+" segundos")
-# plt.show()
-
-
 # Matter Power spectrum following CAMB demo
 pars = camb.CAMBparams()
 pars.set_cosmology(H0=67.5, ombh2=0.02233, omch2=0.1198, omk=0, tau=0.054)
@@ -361,58 +346,58 @@ df.to_csv('PMS_params.txt', sep='\t')
 
 # Storage number density
 
-z_list = z_bin[1]
+# z_list = z_bin[1]
 
-lst_0 = []
-for z in z_list:
-    lst_0.append([z, n_i(z, 0)])
-np.savetxt('Bin_number_d_0.txt', np.array(lst_0))
+# lst_0 = []
+# for z in z_list:
+#     lst_0.append([z, n_i(z, 0)])
+# np.savetxt('Bin_number_d_0.txt', np.array(lst_0))
 
 
-lst_1 = []
-for z in z_list:
-    lst_1.append([z, n_i(z, 1)])
-np.savetxt('Bin_number_d_1.txt', np.array(lst_1))
+# lst_1 = []
+# for z in z_list:
+#     lst_1.append([z, n_i(z, 1)])
+# np.savetxt('Bin_number_d_1.txt', np.array(lst_1))
 
-lst_2 = []
-for z in z_list:
-    lst_2.append([z, n_i(z, 2)])
-np.savetxt('Bin_number_d_2.txt', np.array(lst_2))
+# lst_2 = []
+# for z in z_list:
+#     lst_2.append([z, n_i(z, 2)])
+# np.savetxt('Bin_number_d_2.txt', np.array(lst_2))
 
-lst_3 = []
-for z in z_list:
-    lst_3.append([z, n_i(z, 3)])
-np.savetxt('Bin_number_d_3.txt', np.array(lst_3))
+# lst_3 = []
+# for z in z_list:
+#     lst_3.append([z, n_i(z, 3)])
+# np.savetxt('Bin_number_d_3.txt', np.array(lst_3))
 
-lst_4 = []
-for z in z_list:
-    lst_4.append([z, n_i(z, 4)])
-np.savetxt('Bin_number_d_4.txt', np.array(lst_4))
+# lst_4 = []
+# for z in z_list:
+#     lst_4.append([z, n_i(z, 4)])
+# np.savetxt('Bin_number_d_4.txt', np.array(lst_4))
 
-lst_5 = []
-for z in z_list:
-    lst_5.append([z, n_i(z, 5)])
-np.savetxt('Bin_number_d_5.txt', np.array(lst_5))
+# lst_5 = []
+# for z in z_list:
+#     lst_5.append([z, n_i(z, 5)])
+# np.savetxt('Bin_number_d_5.txt', np.array(lst_5))
 
-lst_6 = []
-for z in z_list:
-    lst_6.append([z, n_i(z, 6)])
-np.savetxt('Bin_number_d_6.txt', np.array(lst_6))
+# lst_6 = []
+# for z in z_list:
+#     lst_6.append([z, n_i(z, 6)])
+# np.savetxt('Bin_number_d_6.txt', np.array(lst_6))
 
-lst_7 = []
-for z in z_list:
-    lst_7.append([z, n_i(z, 7)])
-np.savetxt('Bin_number_d_7.txt', np.array(lst_7))
+# lst_7 = []
+# for z in z_list:
+#     lst_7.append([z, n_i(z, 7)])
+# np.savetxt('Bin_number_d_7.txt', np.array(lst_7))
 
-lst_8 = []
-for z in z_list:
-    lst_8.append([z, n_i(z, 8)])
-np.savetxt('Bin_number_d_8.txt', np.array(lst_8))
+# lst_8 = []
+# for z in z_list:
+#     lst_8.append([z, n_i(z, 8)])
+# np.savetxt('Bin_number_d_8.txt', np.array(lst_8))
 
-lst_9 = []
-for z in z_list:
-    lst_9.append([z, n_i(z, 9)])
-np.savetxt('Bin_number_d_9.txt', np.array(lst_9))
+# lst_9 = []
+# for z in z_list:
+#     lst_9.append([z, n_i(z, 9)])
+# np.savetxt('Bin_number_d_9.txt', np.array(lst_9))
 
 
 lst_n_i = dict()
@@ -465,14 +450,31 @@ def Window_F(z, i):
     return integrate.quad(W_int, z, limits[1], args=(z, i))[0]
 
 
-fig, ax = plt.subplots()
 
-for i in range(10):
-    ax.plot(z_arr, interpolate_n_i['I_%s'%(str(i))](z_arr), c='b')
-ax.plot(z_arr, 25*n(z_arr), c='red')
+
+# Window function for an specific bin for redshift
+start = time.time()
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+for z in z_arr:
+    ax.scatter(z, Window_F(z, 9), s=2.0, label='$Window Function(z)$',
+               color='mediumpurple')
 ax.set_xlabel('Redshift $z$')
-ax.set_ylabel('Number density')
+ax.set_ylabel('Window Function $\tilde{W}_{10}(z)$')
+ax.set_title('Window function for an specific bin $\tilde{W}(z)$ as a function of redshift $z$')
+end = time.time()
+
+print("El tiempo que se demoró es "+str(end-start)+" segundos")
 fig.show()
+
+
+# fig, ax = plt.subplots()
+
+# for i in range(10):
+#     ax.plot(z_arr, interpolate_n_i['I_%s'%(str(i))](z_arr), c='b')
+# ax.plot(z_arr, 25*n(z_arr), c='red')
+# ax.set_xlabel('Redshift $z$')
+# ax.set_ylabel('Number density')
+# fig.show()
 
 
 # Interpolator CAMB
@@ -514,6 +516,17 @@ PK = camb.get_matter_power_interpolator(pars,
 # Expect linear potentials to decay a bit when Lambda becomes important,
 # and change from non-linear growth
 
+# plt.figure(figsize=(8,5))
+# k = np.exp(np.log(10)*np.linspace(-4, 7, 200))
+# for z in z_bin_equi[0]:
+#     plt.loglog(k, PK.P(z, k), color='mediumpurple')
+# plt.xlim([1e-4,kmax])
+# plt.xlabel('Wave-number k (h/Mpc)')
+# plt.ylabel('$P_k, Mpc^3$')
+# plt.legend(['z=%s'%z for z in z_bin_equi[0]])
+# plt.show()
+
+
 
 
 # Calculation of Cosmic shear power spectrum:
@@ -547,7 +560,8 @@ def C(l, i, j, cosmo_pars=dict()):
 
 # start_1 = time.time()
 # fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-# l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
+# # l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
+# l_toplot = np.arange(100, 300)
 # i, j = 2, 9 
 # for l in l_toplot:
 #     ax.scatter(l, C(l, i, j))
@@ -557,9 +571,7 @@ def C(l, i, j, cosmo_pars=dict()):
 # end_1 = time.time()
 
 # print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
-# plt.show()
-
-
+# fig.show()
 
 
 # Compact Notation with Kernel functions
@@ -618,12 +630,3 @@ def int_3(z, i, j, l, cosmo_pars=dict()):
 
 
 
-# plt.figure(figsize=(8,5))
-# k = np.exp(np.log(10)*np.linspace(-4, 7, 200))
-# for z in z_bin_equi[0]:
-#     plt.loglog(k, PK.P(z, k), color='mediumpurple')
-# plt.xlim([1e-4,kmax])
-# plt.xlabel('Wave-number k (h/Mpc)')
-# plt.ylabel('$P_k, Mpc^3$')
-# plt.legend(['z=%s'%z for z in z_bin_equi[0]])
-# plt.show()
