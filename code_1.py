@@ -551,25 +551,28 @@ def C(l, i, j, cosmo_pars=dict()):
     I1 = integrate.quad(int_2, limits[0], limits[1], args=(i, j, l, cosmo_pars))[0]
     return cte*I1
 
-# FOR INDIVIDUAL I J
+# FIHSER MATRIX
 
-start_1 = time.time()
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-# l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
-l_toplot = np.arange(100, 300)
-i, j = 2, 9 
-for l in l_toplot:
-    ax.scatter(l, C(l, i, j))
-ax.set_xlabel('Multipole l')
-ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
-# ax.legend(['z=%s'%z for z in zplot])
-end_1 = time.time()
-
-print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
-fig.show()
+l_lst = np.linspace(10, 1500, 100)
 
 
-# Compact Notation with Kernel functions
+def Delta_l(z, i):
+    lamba_min = np.log(10)
+    lamba_max = np.log(1500)  # pessimist case
+    N_l = 100
+    delta_lambda = (lamba_max - lamba_min)/N_l
+    lambda_k = lamba_min + ((l_lst[i]+1/2)/r(z) - 1)*delta_lambda
+    lambda_k_1 = lamba_min + ((l_lst[i+1]+1/2)/r(z) - 1)*delta_lambda
+    return 10**(lambda_k_1) - 10**(lambda_k)
+
+
+def Cov(m, n, i, j, k, l):
+    f_sky = 1/15000
+    term_1 = C(m, i, k)*C(n, j, l)
+    term_2 = C(m, i, l)*C(n, j, k)
+    term_3 = (2*m + 1)*f_sky*Delta_l(z, i)
+    return ((term_1 + term_2)/term_3) * np.kron(m, n)
+
 
 def K_yy(z, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
@@ -578,6 +581,35 @@ def K_yy(z, i, j, cosmo_pars=dict()):
     term_1 = ((3/2)*Om*(1*z))**2
     term_2 = (Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))/E(z, cosmo_pars)
     return term_1*cte*term_2
+
+
+def shot_noice(l, i, j):
+    ng = 354543085.80106884
+    sigma_e = 0.30
+    n = ng/10
+    return (sigma_e/n)*np.kron(i, j)
+
+
+
+# FOR INDIVIDUAL I J
+
+# start_1 = time.time()
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# # l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
+# l_toplot = np.arange(100, 300)
+# i, j = 2, 9 
+# for l in l_toplot:
+#     ax.scatter(l, C(l, i, j))
+# ax.set_xlabel('Multipole l')
+# ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
+# # ax.legend(['z=%s'%z for z in zplot])
+# end_1 = time.time()
+
+# print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
+# fig.show()
+
+
+# EXTRA Compact Notation with Kernel functions
 
 
 def K_Iy(z, i, j, cosmo_pars=dict()):
