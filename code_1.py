@@ -67,12 +67,11 @@ params_CAMB['Ov'] = results.get_Omega('photon')
 # cration of basic background quantities
 
 
-def Omega_Lambda(Omega_m, Omega_b, Omega_v):
+def Omega_Lambda(Omega_m):
     """La funcion Omega_Lambda nos entregara este parametro en base a los que
     tenemos, para esto tambien debemos calcular Omega c, un parametro que
     no se utilizara, por lo que no es necesario almacenar"""
-    Omega_c = Omega_m - Omega_b
-    return 1 - Omega_c - Omega_b - Omega_v
+    return 1 - Omega_m
 
 
 def Omega_K_0(Omega_DE, Omega_m):
@@ -588,6 +587,104 @@ def shot_noice(l, i, j):
     sigma_e = 0.30
     n = ng/10
     return (sigma_e/n)*np.kron(i, j)
+
+
+# DERIVATES 
+
+
+def d_ln_E(z, dz=str(), cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    T1 = (1 + z)**3
+    T2 = (1 + z)**2
+    E_2 = E(z)**2
+    e_1 = 1 + w0 + wa
+    e_2 = -(3*wa*z)/(1 + z)
+    E_ln = np.log(1 + z) - (z/(1+z))
+    if dz == "Om":
+        return (1/2)*((T1 - T2)/E_2)
+    elif dz == "ODE":
+        return (1/2)*(((T1**e_1)*np.exp(e_2) - T2)/E_2)
+    elif dz == "w0":
+        return (3/2)*((Omega_Lambda(Om)*(T1**e_1)*np.exp(e_2)*np.log(1 + z))/E_2)
+    elif dz == "wa":
+        return (3/2)*((Omega_Lambda(Om)*(T1**e_1)*np.exp(e_2)*E_ln)/E_2)
+    else:
+        return "Error"
+
+
+def int_d_ln_tilder(z, dz=str(), cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    T1 = (1 + z)**3
+    T2 = (1 + z)**2
+    E_3 = E(z)**3
+    e_1 = 1 + w0 + wa
+    e_2 = -(3*wa*z)/(1 + z)
+    E_ln = np.log(1 + z) - (z/(1+z))
+    if dz == "Om":
+        return (1/2)*((T1 - T2)/E_3)
+    elif dz == "ODE":
+        return (1/2)*(((T1**e_1)*np.exp(e_2) - T2)/E_3)
+    elif dz == "w0":
+        return (3/2)*((ODE*(T1**e_1)*np.exp(e_2)*np.log(1 + z))/E_3)
+    elif dz == "wa":
+        return (3/2)*((ODE*(T1**e_1)*np.exp(e_2)*E_ln)/E_3)
+    else:
+        return "Error"
+
+
+def d_ln_tilder(z, dz=str(), cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    if dz == "Om":
+        return 1/2*tilde_r(z, cosmo_pars)*integrate.quad(int_d_ln_tilder, 0, z, args=("Om", cosmo_pars))[0]
+    elif dz == "ODE":
+        return 1/2*tilde_r(z, cosmo_pars)*integrate.quad(int_d_ln_tilder, 0, z, args=("ODE", cosmo_pars))[0]
+    elif dz == "w0":
+        return 3/2*tilde_r(z, cosmo_pars)*integrate.quad(int_d_ln_tilder, 0, z, args=("w0", cosmo_pars))[0]
+    elif dz == "wa":
+        return 3/2*tilde_r(z, cosmo_pars)*integrate.quad(int_d_ln_tilder, 0, z, args=("wa", cosmo_pars))[0]
+    elif dz == "h":
+        return -1/(H0/100)
+    else:
+        return "Error"
+
+
+
+
+def int1_d_ln_W(zi, z, i, cosmo_pars=dict()):
+    term_1 = tilde_r(zi) - tilde_r(z)
+    return (n_i(zi, i)*(term_1/tilde_r(zi)))**(-1)
+
+
+def int2_d_ln_W(zi, z, i, dz=str(), cosmo_pars=dict()):
+    term_1 = tilde_r(z, cosmo_pars)/tilde_r(zi, cosmo_pars)
+    if dz == "Om":
+        term_2 = d_ln_tilder(zi, "Om", cosmo_pars) - d_ln_tilder(z, "Om", cosmo_pars)
+        return n_i(zi,i)*term_2*term_1
+    elif dz == "ODE":
+        term_2 = d_ln_tilder(zi, "ODE", cosmo_pars) - d_ln_tilder(z, "ODe", cosmo_pars)
+        return n_i(zi, i)*term_2*term_1
+    elif dz == "w0":
+        term_2 = d_ln_tilder(zi, "w0", cosmo_pars) - d_ln_tilder(z, "w0", cosmo_pars)
+        return n_i(zi, i)*term_2*term_1
+    elif dz == "wa":
+        term_2 = d_ln_tilder(zi, "wa", cosmo_pars) - d_ln_tilder(z, "wa", cosmo_pars)
+        return n_i(zi, i)*term_2*term_1
+    elif dz == "h":
+        term_2 = d_ln_tilder(zi, "h", cosmo_pars) - d_ln_tilder(z, "h", cosmo_pars)
+        return n_i(zi, i)*term_2*term_1
+
+
+def d_ln_W(z, i, dz=str(), cosmo_pars=dict()):
+    if dz == "Om":
+        I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
+        I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "Om", cosmo_pars))
+    return I1/I2
+
+
+def d_ln_K_Om(z, cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    T1 = 2/Om
+    
 
 
 
