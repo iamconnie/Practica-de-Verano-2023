@@ -450,7 +450,7 @@ def W_int(z_1, z, i):
 
 def Window_F(z, i):
     z_int = np.linspace(z, limits[1], 200)
-    return np.trapz(W_int(z_int, z, i), z_int, )
+    return np.trapz(W_int(z_int, z, i), z_int)
 
 
 
@@ -556,7 +556,8 @@ def C(l, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     c = const.c.value / 1000
     cte = (c/H0)
-    I1 = integrate.quad(int_2, limits[0], limits[1], args=(i, j, l, cosmo_pars))[0]
+    z_int = np.linspace(limits[0], limits[1], 200)
+    I1 = np.trapz(int_2(z_int, i, j, l ,cosmo_pars), z_int)
     return cte*I1
 
 # FIHSER MATRIX
