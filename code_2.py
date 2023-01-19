@@ -121,10 +121,16 @@ def f_integral(z, cosmo_pars=dict()):
 def r(z, cosmo_pars=dict()):
     """r calcula comoving distnace to an objecto redshift"""
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value / 1000
-    cte = c / H0  # h^-1 Mpc
-    return cte*integrate.quad(f_integral, 0, z, args=cosmo_pars)[0]
-
+    if type(z) == np.ndarray:
+        integral = np.zeros(len(z))
+        for idx, redshift in enumerate(z):
+            z_int = np.linspace(0, redshift, len(z))
+            integral[idx] = np.trapz(f_integral(z_int, cosmo_pars), z_int)
+    else: 
+        z_int = np.linspace(0, z, 200)
+        integral = np.trapz(f_integral(z_int, cosmo_pars), z_int)
+    return const.c.value / 1000 / pars.H0 * integral
+1
 
 # transverse comoving distance
 
@@ -289,10 +295,12 @@ def int_1(zp, z):
 def n_i(z, i):
     ith_bin = z_equi[i]
     zi_l, zi_u = ith_bin
-    I1 = integrate.quad(int_1, zi_l,
-                        zi_u, args=z)[0]
-    I2 = integrate.nquad(int_1, [[zi_l, zi_u],
-                         [limits[0], limits[1]]])[0]
+    z_int1 = np.linspace(zi_l, zi_u, 200)
+    z_int2 = np.linspace(limits[0], limits[1], 200)
+    X, Y = np.meshgrid(z_int1, z_int2)
+    list1 = int_1(X, Y)
+    I1 = np.trapz(int_1(z_int1, z), z_int1)
+    I2 = np.trapz(np.trapz(list1, z_int2, axis=0),z_int1, axis=0)
 
     return I1/I2
 
@@ -441,7 +449,8 @@ def W_int(z_1, z, i):
 
 
 def Window_F(z, i):
-    return integrate.quad(W_int, z, limits[1], args=(z, i))[0]
+    z_int = np.linspace(z, limits[1], 200)
+    return np.trapz(W_int(z_int, z, i), z_int, )
 
 
 
@@ -690,20 +699,20 @@ def d_ln_K_Om(z, cosmo_pars=dict()):
 
 # FOR INDIVIDUAL I J
 
-# start_1 = time.time()
-# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-# # l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
-# l_toplot = np.arange(100, 300)
-# i, j = 2, 9 
-# for l in l_toplot:
-#     ax.scatter(l, C(l, i, j))
-# ax.set_xlabel('Multipole l')
-# ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
-# # ax.legend(['z=%s'%z for z in zplot])
-# end_1 = time.time()
+start_1 = time.time()
+fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
+l_toplot = np.arange(100, 300)
+i, j = 2, 9 
+for l in l_toplot:
+    ax.scatter(l, C(l, i, j))
+ax.set_xlabel('Multipole l')
+ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
+# ax.legend(['z=%s'%z for z in zplot])
+end_1 = time.time()
 
-# print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
-# fig.show()
+print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
+fig.show()
 
 
 # EXTRA Compact Notation with Kernel functions
@@ -750,7 +759,3 @@ def int_3(z, i, j, l, cosmo_pars=dict()):
     I2 = K_Iy(z, i, j, cosmo_pars)*P_DI(z, k)
     I3 = K_II(z, i, j, cosmo_pars)*P_II(z, k)
     return I1 + I2 + I3
-
-
-
-
