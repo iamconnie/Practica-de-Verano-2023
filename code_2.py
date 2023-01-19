@@ -130,7 +130,7 @@ def r(z, cosmo_pars=dict()):
         z_int = np.linspace(0, z, 200)
         integral = np.trapz(f_integral(z_int, cosmo_pars), z_int)
     return const.c.value / 1000 / pars.H0 * integral
-1
+
 
 # transverse comoving distance
 
@@ -158,23 +158,23 @@ def D(z, cosmo_pars=dict()):
 # all plots in the same row, share the y-axis.
 
 z_arr = np.linspace(0, 2.5, 100)
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
 
 # Proper distance dependent on redshift plot
-ax.plot(z_arr, E_arb(z_arr), label='$E(z)$', color='mediumpurple')
-ax.set_xlabel('Redshift $z$')
-ax.set_ylabel('$E(z)$')
-ax.set_title('Proper distance $E(z) as a function of redshift $z$')
+# ax.plot(z_arr, E_arb(z_arr), label='$E(z)$', color='mediumpurple')
+# ax.set_xlabel('Redshift $z$')
+# ax.set_ylabel('$E(z)$')
+# ax.set_title('Proper distance $E(z) as a function of redshift $z$')
 # plt.show()
 
 # Comoving distance to an object redshift z plot
 
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-for z in z_arr:
-    ax.scatter(z, r(z), s=1.0, label='$r(z)$', color='mediumpurple')
-ax.set_xlabel('Redshift $z$')
-ax.set_ylabel('$Comoving distance r(z)$')
-ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# for z in z_arr:
+#     ax.scatter(z, r(z), s=1.0, label='$r(z)$', color='mediumpurple')
+# ax.set_xlabel('Redshift $z$')
+# ax.set_ylabel('$Comoving distance r(z)$')
+# ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
 # plt.show()
 
 # Angular diameter distance to an object redshift z plot
@@ -337,12 +337,12 @@ list_of_PMS = list(zip(kh, z, pk, kh_nonlin, z_nonlin, pk_nonlin))
  
 # Converting lists of tuples into
 # pandas Dataframe.
-df = pd.DataFrame(list_of_PMS,
-                  columns=['kh', 'z', 'pk', 'nonlinear_kh',
-                           'nonlinear_z', 'nonlinear_pk'])
+# df = pd.DataFrame(list_of_PMS,
+#                   columns=['kh', 'z', 'pk', 'nonlinear_kh',
+#                            'nonlinear_z', 'nonlinear_pk'])
 
-# Print data.
-df.to_csv('PMS_params.txt', sep='\t')
+# # Print data.
+# df.to_csv('PMS_params.txt', sep='\t')
 
 # Storage number density
 
@@ -556,9 +556,33 @@ def C(l, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     c = const.c.value / 1000
     cte = (c/H0)
-    z_int = np.linspace(limits[0], limits[1], 200)
-    I1 = np.trapz(int_2(z_int, i, j, l ,cosmo_pars), z_int)
+    I1 = integrate.quad(int_2, limits[0], limits[1], args=(i, j, l, cosmo_pars))[0]
     return cte*I1
+
+# FOR INDIVIDUAL I J
+
+# start_1 = time.time()
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# # l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
+# l_toplot = np.arange(100, 300)
+# i, j = 2, 9 
+# for l in l_toplot:
+#     ax.scatter(l, C(l, i, j))
+# ax.set_xlabel('Multipole l')
+# ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
+# # ax.legend(['z=%s'%z for z in zplot])
+# end_1 = time.time()
+
+# print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
+# fig.show()
+
+
+# cosmic_shear_array = np.zeros((1401, 10, 10))
+# for l in range(100, 1501):  
+#     for i in range(10):
+#         for j in range(10):
+#             cosmic_shear_array[l-100, i, j] = C(l, i, j)
+
 
 # FIHSER MATRIX
 
@@ -688,32 +712,58 @@ def d_ln_W(z, i, dz=str(), cosmo_pars=dict()):
     if dz == "Om":
         I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
         I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "Om", cosmo_pars))
-    return I1/I2
-
-
-def d_ln_K_Om(z, cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    T1 = 2/Om
+        return I1/I2
+    elif dz == "ODE":
+        I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
+        I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "ODE", cosmo_pars))
+        return I1/I2
+    elif dz == "w0":
+        I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
+        I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "w0", cosmo_pars))
+        return I1/I2
+    elif dz == "wa":
+        I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
+        I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "wa", cosmo_pars))
+        return I1/I2
+    elif dz == "h":
+        I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
+        I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "h", cosmo_pars))
+        return I1/I2
     
 
 
 
-# FOR INDIVIDUAL I J
+def d_ln_K(z, i, j, dz=str(), cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    if dz == "Om":
+        return (2/Om) - d_ln_E(z, "Om", cosmo_pars) + d_ln_W(z, i, "Om", cosmo_pars) + d_ln_W(z, j, "Om", cosmo_pars)
+    elif dz == "ODE":
+        return - d_ln_E(z, "ODE", cosmo_pars) + d_ln_W(z, i, "ODE", cosmo_pars) + d_ln_W(z, j, "ODE", cosmo_pars)
+    elif dz == "w0":
+        return - d_ln_E(z, "w0", cosmo_pars) + d_ln_W(z, i, "w0", cosmo_pars) + d_ln_W(z, j, "w0", cosmo_pars)
+    elif dz == "wa":
+        return - d_ln_E(z, "wa", cosmo_pars) + d_ln_W(z, i, "wa", cosmo_pars) + d_ln_W(z, j, "wa", cosmo_pars)
+    elif dz == "h":
+        return 3/(H0/100)
 
-start_1 = time.time()
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-# l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
-l_toplot = np.arange(100, 300)
-i, j = 2, 9 
-for l in l_toplot:
-    ax.scatter(l, C(l, i, j))
-ax.set_xlabel('Multipole l')
-ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
-# ax.legend(['z=%s'%z for z in zplot])
-end_1 = time.time()
 
-print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
-fig.show()
+def d_K(z, i, j, dz=str(), cosmo_pars=dict()):
+    if dz == "Om":
+        return K_yy(z, i, j, cosmo_pars)*d_ln_K(z, i, j, "Om", cosmo_pars)
+    elif dz == "ODE":
+        return K_yy(z, i, j, cosmo_pars)*d_ln_K(z, i, j, "ODE", cosmo_pars)
+    elif dz == "w0":
+        return K_yy(z, i, j, cosmo_pars)*d_ln_K(z, i, j, "w0", cosmo_pars)
+    elif dz == "wa":
+        return K_yy(z, i, j, cosmo_pars)*d_ln_K(z, i, j, "wa", cosmo_pars)
+    elif dz == "h":
+        return K_yy(z, i, j, cosmo_pars)*d_ln_K(z, i, j, "h", cosmo_pars)
+
+    
+
+
+
+
 
 
 # EXTRA Compact Notation with Kernel functions
