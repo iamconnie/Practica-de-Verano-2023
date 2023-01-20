@@ -621,7 +621,7 @@ def Cov(i, j, cosmo_pars=dict()):
 def Obs_E(l, i, j, cosmo_pars=dict()):
     f_sky = 1/15000
     # delta_l = l_lst[-1] - l_lst[0]
-    return np.sqrt(2/((2*l + 1)*Delta_l(i)*f_sky))*C(l, i, j, cosmo_pars)
+    return np.sqrt(2/((2*l + 1)*Delta_l(i)*f_sky))*cosmic_shear_array[l]
 
 
 def K_yy(z, i, j, cosmo_pars=dict()):
