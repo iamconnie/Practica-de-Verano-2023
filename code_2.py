@@ -584,15 +584,15 @@ def C(l, i, j, cosmo_pars=dict()):
 
 load_cosmic = np.loadtxt('quad_convergence/quad_file.txt')
 
-# cosmic_shear_array = np.reshape(load_cosmic,
-#                                  (load_cosmic.shape[0], load_cosmic.shape[1]
-#                                   // 10, 10))
-# np.save('quad_convergence/quad_file', C)
+cosmic_shear_array = np.reshape(load_cosmic,
+                                 (load_cosmic.shape[0], load_cosmic.shape[1]
+                                  // 10, 10))
+np.save('quad_convergence/quad_file', C)
 
 lst_C_l = {}
 
 for i in range(200):
-    lst_C_l['C_bin'%(str(i))] = load_cosmic[i]
+    lst_C_l['C_bin_%s'%(str(i))] = load_cosmic[i]
 
 
 # FIHSER MATRIX
@@ -610,10 +610,10 @@ def Delta_l(i):
     return 10**(lambda_k_1) - 10**(lambda_k)
 
 
-def Cov(m, n, i, j, k, l, cosmo_pars=dict()):
+def Cov(i, j, cosmo_pars=dict()):
     f_sky = 1/15000
-    term_1 = C(m, i, k, cosmo_pars)*C(n, j, l, cosmo_pars)
-    term_2 = C(m, i, l, cosmo_pars)*C(n, j, k, cosmo_pars)
+    term_1 = 
+    term_2 = 
     term_3 = (2*m + 1)*f_sky*Delta_l(i)
     return ((term_1 + term_2)/term_3) * np.kron(m, n)
 
