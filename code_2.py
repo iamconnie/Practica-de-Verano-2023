@@ -15,11 +15,13 @@ import scipy.interpolate as interpolate
 
 
 # instalacion de camb
+
 camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
 sys.path.insert(0, camb_path)
 
 
-print('Using CAMB %s installed at %s'%(camb.__version__, os.path.dirname(camb.__file__)))
+print('Using CAMB %s installed at %s' % (
+      camb.__version__, os.path.dirname(camb.__file__)))
 
 
 # Creación de funciones E(z) y D(z), a manera de prueba se ocuparan los
@@ -86,8 +88,6 @@ def cosmological_parameters(cosmo_pars=dict()):
     que sean facil de utilizar, el default son los parametros de Planck 2018"""
     H0 = cosmo_pars.get('H0', params_CAMB['H0'])
     Om = cosmo_pars.get('Om', params_CAMB['Om'])
-    Ob = cosmo_pars.get('Ob', params_CAMB['Ob'])
-    Ov = cosmo_pars.get('Ov', params_CAMB['Ov'])
     ODE = cosmo_pars.get('ODE', params_CAMB['ODE'])
     OL = Omega_Lambda(Om)
     OK = Omega_K_0(ODE, Om)
@@ -122,11 +122,11 @@ def r(z, cosmo_pars=dict()):
     """r calcula comoving distnace to an objecto redshift"""
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     if type(z) == np.ndarray:
-        integral = np.zeros(len(z))
+        integral = np.zeros(200)
         for idx, redshift in enumerate(z):
-            z_int = np.linspace(0, redshift, len(z))
+            z_int = np.linspace(0, redshift, 200)
             integral[idx] = np.trapz(f_integral(z_int, cosmo_pars), z_int)
-    else: 
+    else:
         z_int = np.linspace(0, z, 200)
         integral = np.trapz(f_integral(z_int, cosmo_pars), z_int)
     return const.c.value / 1000 / pars.H0 * integral
@@ -227,8 +227,10 @@ z_arr = np.linspace(0, 2.5, 100)
 z_bin = binned_statistic(z_arr, z_arr, bins=100)
 z_bin_equi = binned_statistic(z_arr, z_arr, bins=10)
 limits = [z_bin.bin_edges[0], z_bin.bin_edges[-1]]
-z_equi = [(0.001, 0.42), (0.42, 0.56), (0.56, 0.68), (0.68, 0.79), (0.79, 0.90),
-                    (0.90, 1.02), (1.02, 1.15) ,(1.15, 1.32), (1.32, 1.58), (1.58, 2.50)] # This are the values from the paper
+# This are the values from the paper
+z_equi = [(0.001, 0.42), (0.42, 0.56), (0.56, 0.68), (0.68, 0.79),
+          (0.79, 0.90), (0.90, 1.02), (1.02, 1.15), (1.15, 1.32),
+          (1.32, 1.58), (1.58, 2.50)]
 
 # Parameters adopted to describe the photometric redshift distribution source
 
@@ -290,8 +292,6 @@ def int_1(zp, z):
     return n(z)*P_ph(zp, z)
 
 
-
-
 def n_i(z, i):
     ith_bin = z_equi[i]
     zi_l, zi_u = ith_bin
@@ -305,9 +305,8 @@ def n_i(z, i):
     return I1/I2
 
 
-
-
 # Matter Power spectrum following CAMB demo
+
 pars = camb.CAMBparams()
 pars.set_cosmology(H0=67.5, ombh2=0.02233, omch2=0.1198, omk=0, tau=0.054)
 # Now get matter power spectra and sigma8 at redshift 0 and 0.8
@@ -330,11 +329,10 @@ kh_nonlin, z_nonlin, pk_nonlin = results.get_matter_power_spectrum(minkh=1e-4,
                                                                    npoints=200)
 
 
-
 # Storage power matter parameters
 
 list_of_PMS = list(zip(kh, z, pk, kh_nonlin, z_nonlin, pk_nonlin))
- 
+
 # Converting lists of tuples into
 # pandas Dataframe.
 # df = pd.DataFrame(list_of_PMS,
@@ -422,7 +420,7 @@ interpolate_n_i = dict()
 interpolate_n_i["I_0"] = interpolate.interp1d(lst_n_i["bin_0"][:, 0],
                                               lst_n_i["bin_0"][:, 1])
 interpolate_n_i["I_1"] = interpolate.interp1d(lst_n_i["bin_1"][:, 0],
-                                              lst_n_i["bin_1"][:, 1])                                              
+                                              lst_n_i["bin_1"][:, 1])
 interpolate_n_i["I_2"] = interpolate.interp1d(lst_n_i["bin_2"][:, 0],
                                               lst_n_i["bin_2"][:, 1])
 interpolate_n_i["I_3"] = interpolate.interp1d(lst_n_i["bin_3"][:, 0],
@@ -444,15 +442,14 @@ interpolate_n_i["I_9"] = interpolate.interp1d(lst_n_i["bin_9"][:, 0],
 # Window Function
 
 
-def W_int(z_1, z, i):
-    return interpolate_n_i['I_%s'%(str(i))](z_1)*(1-tilde_r(z)/tilde_r(z_1))
+def W_int(z_1, z, i, cosmo_pars=dict()):
+    return interpolate_n_i['I_%s' % (str(i))](z_1)*(
+        1-tilde_r(z, cosmo_pars)/tilde_r(z_1, cosmo_pars))
 
 
-def Window_F(z, i):
+def Window_F(z, i, cosmo_pars=dict()):
     z_int = np.linspace(z, limits[1], 200)
-    return np.trapz(W_int(z_int, z, i), z_int)
-
-
+    return np.trapz(W_int(z_int, z, i, cosmo_pars), z_int)
 
 
 # Window function for an specific bin for redshift
@@ -482,12 +479,6 @@ def Window_F(z, i):
 
 # Interpolator CAMB
 
-# For calculating large-scale structure and lensing results yourself,
-# get a power spectrum interpolation object.
-# In this example we calculate the CMB lensing potential power
-# spectrum using the Limber approximation,
-# using PK=camb.get_matter_power_interpolator() function.
-# calling PK(z, k) will then get power spectrum at any k and redshift z in range.
 
 nz = 100  # number of steps to use for the radial/redshift integration
 kmax = 7   # kmax to use with k_hunit = Mpc/h
@@ -499,7 +490,8 @@ results = camb.get_background(pars)
 chistar = results.conformal_time(0) - results.tau_maxvis
 chis = np.linspace(0, chistar, nz)
 zs = results.redshift_at_comoving_radial_distance(chis)
-# Calculate array of delta_chi, and drop first and last points where things go singular
+# Calculate array of delta_chi, and drop first and
+# last points where things go singular
 dchis = (chis[2:]-chis[:-2])/2
 chis = chis[1:-1]
 zs = zs[1:-1]
@@ -530,8 +522,6 @@ PK = camb.get_matter_power_interpolator(pars,
 # plt.show()
 
 
-
-
 # Calculation of Cosmic shear power spectrum:
 
 
@@ -542,11 +532,12 @@ def Weight_F(z, i, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     c = const.c.value / 1000
     cte = (3/2)*((H0/c)**2)*Om
-    return cte*(1 + z)*r(z, cosmo_pars)*Window_F(z, i)
+    return cte*(1 + z)*r(z, cosmo_pars)*Window_F(z, i, cosmo_pars)
 
 
 def int_2(z, i, j, l, cosmo_pars=dict()):
-    I1 = (Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))/(E(z, cosmo_pars)*(r(z, cosmo_pars)**2))
+    I1 = (Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))/(
+          E(z, cosmo_pars)*(r(z, cosmo_pars)**2))
     k = (l + (1/2))/r(z, cosmo_pars)
     PMS = PK.P(z, k)
     return I1*PMS
@@ -556,32 +547,52 @@ def C(l, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     c = const.c.value / 1000
     cte = (c/H0)
-    I1 = integrate.quad(int_2, limits[0], limits[1], args=(i, j, l, cosmo_pars))[0]
+    I1 = integrate.quad(int_2, limits[0],
+                        limits[1], args=(i, j, l, cosmo_pars))[0]
     return cte*I1
 
 # FOR INDIVIDUAL I J
 
 # start_1 = time.time()
 # fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-# # l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012] # segun yo se plotea z_arr o la lista de los bins
-# l_toplot = np.arange(100, 300)
-# i, j = 2, 9 
+# l_toplot = [138, 194, 271, 378, 529, 739, 1031, 1440, 2012]
+# #l_toplot = np.arange(100, 300)
+# i, j = 1, 1
 # for l in l_toplot:
-#     ax.scatter(l, C(l, i, j))
+#     ax.scatter(l, l*(l+1)*C(l, i, j)/(2*np.pi), label="$l(l+1)/2\pi C_{1,1}$")
+#     ax.scatter(l, l*(l+1)*C(l, 9, 9)/(2*np.pi), label="$l(l+1)/2\pi C_{9,9}$")
 # ax.set_xlabel('Multipole l')
-# ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
+# ax.set_ylabel(r'$l(l+1)/2\pi C_{%s%s}^{\gamma\gamma(l)}$'%(str(i), str(j)))
 # # ax.legend(['z=%s'%z for z in zplot])
 # end_1 = time.time()
 
 # print("El tiempo que se demoró es "+str(end_1-start_1)+" segundos")
+# fig.legend()
 # fig.show()
 
 
-# cosmic_shear_array = np.zeros((1401, 10, 10))
-# for l in range(100, 1501):  
+# cosmic_shear_array = np.zeros((200, 10, 10))
+# for l in range(100, 301):
 #     for i in range(10):
 #         for j in range(10):
 #             cosmic_shear_array[l-100, i, j] = C(l, i, j)
+#             print("i: %f, j: %f" %(i, j), end = '\r')
+
+# reshape_cosmic = np.reshape(cosmic_shear_array, (cosmic_shear_array.shape[0], -1))
+
+# np.savetxt('quad_convergence/quad_file', reshape_cosmic)
+
+load_cosmic = np.loadtxt('quad_convergence/quad_file.txt')
+
+# cosmic_shear_array = np.reshape(load_cosmic,
+#                                  (load_cosmic.shape[0], load_cosmic.shape[1]
+#                                   // 10, 10))
+# np.save('quad_convergence/quad_file', C)
+
+lst_C_l = {}
+
+for i in range(200):
+    lst_C_l['C_bin'%(str(i))] = load_cosmic[i]
 
 
 # FIHSER MATRIX
@@ -589,22 +600,28 @@ def C(l, i, j, cosmo_pars=dict()):
 l_lst = np.linspace(10, 1500, 100)
 
 
-def Delta_l(z, i):
-    lamba_min = np.log(10)
-    lamba_max = np.log(1500)  # pessimist case
+def Delta_l(i):
+    lamba_min = np.log(l_lst[0])
+    lamba_max = np.log(l_lst[-1])  # pessimist case
     N_l = 100
     delta_lambda = (lamba_max - lamba_min)/N_l
-    lambda_k = lamba_min + ((l_lst[i]+1/2)/r(z) - 1)*delta_lambda
-    lambda_k_1 = lamba_min + ((l_lst[i+1]+1/2)/r(z) - 1)*delta_lambda
+    lambda_k = lamba_min + (i - 1)*delta_lambda
+    lambda_k_1 = lamba_min + i*delta_lambda
     return 10**(lambda_k_1) - 10**(lambda_k)
 
 
-def Cov(m, n, i, j, k, l):
+def Cov(m, n, i, j, k, l, cosmo_pars=dict()):
     f_sky = 1/15000
-    term_1 = C(m, i, k)*C(n, j, l)
-    term_2 = C(m, i, l)*C(n, j, k)
-    term_3 = (2*m + 1)*f_sky*Delta_l(z, i)
+    term_1 = C(m, i, k, cosmo_pars)*C(n, j, l, cosmo_pars)
+    term_2 = C(m, i, l, cosmo_pars)*C(n, j, k, cosmo_pars)
+    term_3 = (2*m + 1)*f_sky*Delta_l(i)
     return ((term_1 + term_2)/term_3) * np.kron(m, n)
+
+
+def Obs_E(l, i, j, cosmo_pars=dict()):
+    f_sky = 1/15000
+    # delta_l = l_lst[-1] - l_lst[0]
+    return np.sqrt(2/((2*l + 1)*Delta_l(i)*f_sky))*C(l, i, j, cosmo_pars)
 
 
 def K_yy(z, i, j, cosmo_pars=dict()):
@@ -612,7 +629,8 @@ def K_yy(z, i, j, cosmo_pars=dict()):
     c = const.c.value / 1000
     cte = (H0/c)**3
     term_1 = ((3/2)*Om*(1*z))**2
-    term_2 = (Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))/E(z, cosmo_pars)
+    term_2 = ((Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))
+              / E(z, cosmo_pars))
     return term_1*cte*term_2
 
 
@@ -623,7 +641,7 @@ def shot_noice(l, i, j):
     return (sigma_e/n)*np.kron(i, j)
 
 
-# DERIVATES 
+# DERIVATES
 
 
 def d_ln_E(z, dz=str(), cosmo_pars=dict()):
@@ -669,19 +687,21 @@ def int_d_ln_tilder(z, dz=str(), cosmo_pars=dict()):
 def d_ln_tilder(z, dz=str(), cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     if dz == "Om":
-        return 1/2*tilde_r(z, cosmo_pars)*integrate.quad(int_d_ln_tilder, 0, z, args=("Om", cosmo_pars))[0]
+        return 1/2*tilde_r(z, cosmo_pars)*integrate.quad(
+            int_d_ln_tilder, 0, z, args=("Om", cosmo_pars))[0]
     elif dz == "ODE":
-        return 1/2*tilde_r(z, cosmo_pars)*integrate.quad(int_d_ln_tilder, 0, z, args=("ODE", cosmo_pars))[0]
+        return 1/2*tilde_r(z, cosmo_pars)*integrate.quad(
+            int_d_ln_tilder, 0, z, args=("ODE", cosmo_pars))[0]
     elif dz == "w0":
-        return 3/2*tilde_r(z, cosmo_pars)*integrate.quad(int_d_ln_tilder, 0, z, args=("w0", cosmo_pars))[0]
+        return 3/2*tilde_r(z, cosmo_pars)*integrate.quad(
+            int_d_ln_tilder, 0, z, args=("w0", cosmo_pars))[0]
     elif dz == "wa":
-        return 3/2*tilde_r(z, cosmo_pars)*integrate.quad(int_d_ln_tilder, 0, z, args=("wa", cosmo_pars))[0]
+        return 3/2*tilde_r(z, cosmo_pars)*integrate.quad(
+            int_d_ln_tilder, 0, z, args=("wa", cosmo_pars))[0]
     elif dz == "h":
         return -1/(H0/100)
     else:
         return "Error"
-
-
 
 
 def int1_d_ln_W(zi, z, i, cosmo_pars=dict()):
@@ -692,57 +712,73 @@ def int1_d_ln_W(zi, z, i, cosmo_pars=dict()):
 def int2_d_ln_W(zi, z, i, dz=str(), cosmo_pars=dict()):
     term_1 = tilde_r(z, cosmo_pars)/tilde_r(zi, cosmo_pars)
     if dz == "Om":
-        term_2 = d_ln_tilder(zi, "Om", cosmo_pars) - d_ln_tilder(z, "Om", cosmo_pars)
-        return n_i(zi,i)*term_2*term_1
+        term_2 = (d_ln_tilder(zi, "Om", cosmo_pars)
+                  - d_ln_tilder(z, "Om", cosmo_pars))
+        return n_i(zi, i)*term_2*term_1
     elif dz == "ODE":
-        term_2 = d_ln_tilder(zi, "ODE", cosmo_pars) - d_ln_tilder(z, "ODe", cosmo_pars)
+        term_2 = (d_ln_tilder(zi, "ODE", cosmo_pars)
+                  - d_ln_tilder(z, "ODE", cosmo_pars))
         return n_i(zi, i)*term_2*term_1
     elif dz == "w0":
-        term_2 = d_ln_tilder(zi, "w0", cosmo_pars) - d_ln_tilder(z, "w0", cosmo_pars)
+        term_2 = (d_ln_tilder(zi, "w0", cosmo_pars)
+                  - d_ln_tilder(z, "w0", cosmo_pars))
         return n_i(zi, i)*term_2*term_1
     elif dz == "wa":
-        term_2 = d_ln_tilder(zi, "wa", cosmo_pars) - d_ln_tilder(z, "wa", cosmo_pars)
+        term_2 = (d_ln_tilder(zi, "wa", cosmo_pars)
+                  - d_ln_tilder(z, "wa", cosmo_pars))
         return n_i(zi, i)*term_2*term_1
     elif dz == "h":
-        term_2 = d_ln_tilder(zi, "h", cosmo_pars) - d_ln_tilder(z, "h", cosmo_pars)
+        term_2 = (d_ln_tilder(zi, "h", cosmo_pars)
+                  - d_ln_tilder(z, "h", cosmo_pars))
         return n_i(zi, i)*term_2*term_1
 
 
 def d_ln_W(z, i, dz=str(), cosmo_pars=dict()):
     if dz == "Om":
         I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
-        I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "Om", cosmo_pars))
+        I2 = integrate.quad(
+            int2_d_ln_W, z, limits[1], args=(z, i, "Om", cosmo_pars))
         return I1/I2
     elif dz == "ODE":
         I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
-        I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "ODE", cosmo_pars))
+        I2 = integrate.quad(
+            int2_d_ln_W, z, limits[1], args=(z, i, "ODE", cosmo_pars))
         return I1/I2
     elif dz == "w0":
         I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
-        I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "w0", cosmo_pars))
+        I2 = integrate.quad(
+            int2_d_ln_W, z, limits[1], args=(z, i, "w0", cosmo_pars))
         return I1/I2
     elif dz == "wa":
         I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
-        I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "wa", cosmo_pars))
+        I2 = integrate.quad(
+            int2_d_ln_W, z, limits[1], args=(z, i, "wa", cosmo_pars))
         return I1/I2
     elif dz == "h":
         I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
-        I2 = integrate.quad(int2_d_ln_W, z, limits[1], args=(z, i, "h", cosmo_pars))
+        I2 = integrate.quad(
+            int2_d_ln_W, z, limits[1], args=(z, i, "h", cosmo_pars))
         return I1/I2
-    
-
 
 
 def d_ln_K(z, i, j, dz=str(), cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     if dz == "Om":
-        return (2/Om) - d_ln_E(z, "Om", cosmo_pars) + d_ln_W(z, i, "Om", cosmo_pars) + d_ln_W(z, j, "Om", cosmo_pars)
+        return ((2/Om) - d_ln_E(z, "Om", cosmo_pars)
+                + d_ln_W(z, i, "Om", cosmo_pars)
+                + d_ln_W(z, j, "Om", cosmo_pars))
     elif dz == "ODE":
-        return - d_ln_E(z, "ODE", cosmo_pars) + d_ln_W(z, i, "ODE", cosmo_pars) + d_ln_W(z, j, "ODE", cosmo_pars)
+        return (- d_ln_E(z, "ODE", cosmo_pars)
+                + d_ln_W(z, i, "ODE", cosmo_pars)
+                + d_ln_W(z, j, "ODE", cosmo_pars))
     elif dz == "w0":
-        return - d_ln_E(z, "w0", cosmo_pars) + d_ln_W(z, i, "w0", cosmo_pars) + d_ln_W(z, j, "w0", cosmo_pars)
+        return (- d_ln_E(z, "w0", cosmo_pars)
+                + d_ln_W(z, i, "w0", cosmo_pars)
+                + d_ln_W(z, j, "w0", cosmo_pars))
     elif dz == "wa":
-        return - d_ln_E(z, "wa", cosmo_pars) + d_ln_W(z, i, "wa", cosmo_pars) + d_ln_W(z, j, "wa", cosmo_pars)
+        return (- d_ln_E(z, "wa", cosmo_pars)
+                + d_ln_W(z, i, "wa", cosmo_pars)
+                + d_ln_W(z, j, "wa", cosmo_pars))
     elif dz == "h":
         return 3/(H0/100)
 
@@ -759,11 +795,23 @@ def d_K(z, i, j, dz=str(), cosmo_pars=dict()):
     elif dz == "h":
         return K_yy(z, i, j, cosmo_pars)*d_ln_K(z, i, j, "h", cosmo_pars)
 
-    
+
+def d_kl(z, l, dz=str(), cosmo_pars=dict()):
+    if dz == "Om":
+        return (-d_ln_tilder(z, "Om", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
+    elif dz == "ODE":
+        return (-d_ln_tilder(z, "ODE", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
+    elif dz == "w0":
+        return (-d_ln_tilder(z, "w0", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
+    elif dz == "wa":
+        return (-d_ln_tilder(z, "wa", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
+    elif dz == "h":
+        return (-d_ln_tilder(z, "h", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
 
 
-
-
+def d_k_mps(z, l, dk=0.01):
+    k = (l + 1/2) / r(z)
+    return (PK.P(z, k+dk) - PK.P(z, k)) / dk
 
 
 # EXTRA Compact Notation with Kernel functions

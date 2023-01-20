@@ -1,3 +1,5 @@
+# importancion de paquetes necesarios para el código
+
 import sys
 import os
 import numpy as np
@@ -12,10 +14,6 @@ from astropy import constants as const
 import scipy.interpolate as interpolate
 
 
-def a(x):
-    return x**3
-
-f = lambda x, y, z : a(x) + y**2 +z**2
 
 # instalacion de camb
 camb_path = os.path.realpath(os.path.join(os.getcwd(), '..'))
@@ -89,8 +87,6 @@ def cosmological_parameters(cosmo_pars=dict()):
     que sean facil de utilizar, el default son los parametros de Planck 2018"""
     H0 = cosmo_pars.get('H0', params_CAMB['H0'])
     Om = cosmo_pars.get('Om', params_CAMB['Om'])
-    Ob = cosmo_pars.get('Ob', params_CAMB['Ob'])
-    Ov = cosmo_pars.get('Ov', params_CAMB['Ov'])
     ODE = cosmo_pars.get('ODE', params_CAMB['ODE'])
     OL = Omega_Lambda(Om)
     OK = Omega_K_0(ODE, Om)
@@ -121,24 +117,49 @@ def f_integral(z, cosmo_pars=dict()):
     return 1/E(z, cosmo_pars)
 
 
+
 def r(z, cosmo_pars=dict()):
     """r calcula comoving distnace to an objecto redshift"""
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value / 1000 
-    cte = c/H0
-    f = lambda z: 1/ E(z, cosmo_pars)
-    z_int = np.linspace(0, z, 200)
-    return cte*np.trapz(f(z_int), z_int)
+    if type(z) == np.ndarray:
+        integral = np.zeros(200)
+        for idx, redshift in enumerate(z):
+            z_int = np.linspace(0, redshift, 200)
+            integral[idx] = np.trapz(f_integral(z_int, cosmo_pars), z_int)
+    else:
+        z_int = np.linspace(0, z, 200)
+        integral = np.trapz(f_integral(z_int, cosmo_pars), z_int)
+    return const.c.value / 1000 / pars.H0 * integral
+
+
+# transverse comoving distance
+
+
+def D(z, cosmo_pars=dict()):
+    """La funcion D calcula transverse comoving distance para los distintos
+    casos de el parametro Omgea_K_0"""
+    c = const.c.value / 1000
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    cte_1 = c/H0
+    cte_2 = H0/c
+    a = 1/(1+z)
+    if Ok < 0:
+        return a*(cte_1*(1/(np.abs(Ok)**(1/2))))*np.sin(
+            np.abs(Ok)**(1/2)*cte_2*r(z, cosmo_pars))
+    if Ok == 0:
+        return a*r(z, cosmo_pars)
+    if Ok > 0:
+        return a*(cte_1*(1/(Ok**(1/2))))*np.sinh(
+            (Ok**(1/2))*cte_2*r(z, cosmo_pars))
+    else:
+        return "Error"
+
+
+# all plots in the same row, share the y-axis.
 
 z_arr = np.linspace(0, 2.5, 100)
 
-# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-# for z in z_arr:
-#     ax.scatter(z, r(z), s=1.0, label='$r(z)$', color='mediumpurple')
-# ax.set_xlabel('Redshift $z$')
-# ax.set_ylabel('$Comoving distance r(z)$')
-# ax.set_title('Comoving distance $r(z)$ as a function of redshift $z$')
-# fig.show()
+# Window Function
 
 # Bin creation
 
@@ -146,7 +167,7 @@ z_bin = binned_statistic(z_arr, z_arr, bins=100)
 z_bin_equi = binned_statistic(z_arr, z_arr, bins=10)
 limits = [z_bin.bin_edges[0], z_bin.bin_edges[-1]]
 z_equi = [(0.001, 0.42), (0.42, 0.56), (0.56, 0.68), (0.68, 0.79), (0.79, 0.90),
-                    (0.90, 1.02), (1.02, 1.15) ,(1.15, 1.32), (1.32, 1.58), (1.58, 2.50)] # This are the values from the paper
+                    (0.90, 1.02), (1.02, 1.15), (1.15, 1.32), (1.32, 1.58), (1.58, 2.50)] # This are the values from the paper
 
 # Parameters adopted to describe the photometric redshift distribution source
 
@@ -209,7 +230,6 @@ def int_1(zp, z):
 
 
 
-
 def n_i(z, i):
     ith_bin = z_equi[i]
     zi_l, zi_u = ith_bin
@@ -252,6 +272,9 @@ kh_nonlin, z_nonlin, pk_nonlin = results.get_matter_power_spectrum(minkh=1e-4,
 # Storage power matter parameters
 
 list_of_PMS = list(zip(kh, z, pk, kh_nonlin, z_nonlin, pk_nonlin))
+ 
+
+# Dictionary of Bin number density
 
 lst_n_i = dict()
 
@@ -265,6 +288,9 @@ lst_n_i["bin_6"] = np.loadtxt("Bin_number_d_6.txt")
 lst_n_i["bin_7"] = np.loadtxt("Bin_number_d_7.txt")
 lst_n_i["bin_8"] = np.loadtxt("Bin_number_d_8.txt")
 lst_n_i["bin_9"] = np.loadtxt("Bin_number_d_9.txt")
+
+
+# Dictionary of Inerpolation for bin number density
 
 interpolate_n_i = dict()
 
@@ -290,32 +316,101 @@ interpolate_n_i["I_9"] = interpolate.interp1d(lst_n_i["bin_9"][:, 0],
                                               lst_n_i["bin_9"][:, 1])
 
 
-def W_int(z_1, z, i):
-    return interpolate_n_i['I_%s'%(str(i))](z_1)*(1-tilde_r(z)/tilde_r(z_1))
+# Window Function
 
 
-def Window_F(z, i):
+def W_int(z_1, z, i, cosmo_pars=dict()):
+    return interpolate_n_i['I_%s'%(str(i))](z_1)*(1-tilde_r(z, cosmo_pars)/tilde_r(z_1, cosmo_pars))
+
+
+def Window_F(z, i, cosmo_pars=dict()):
     z_int = np.linspace(z, limits[1], 200)
-    return np.trapz(W_int(z_int, z, i), z_int)
+    return np.trapz(W_int(z_int, z, i, cosmo_pars), z_int)
 
-start = time.time()
-fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-for z in z_arr:
-    ax.scatter(z, Window_F(z, 1), s=2.0, label='$Window Function(z)$',
-               color='mediumpurple')
-ax.set_xlabel('Redshift $z$')
-ax.set_ylabel('Window Function $\tilde{W}_{1}(z)$')
-ax.set_title('Window function for an specific bin $\tilde{W}(z)$ as a function of redshift $z$')
-end = time.time()
 
-print("El tiempo que se demoró es "+str(end-start)+" segundos")
-fig.show()
 
-def Convergence(l, i, j, z, cosmo_pars=dict()):
+
+# Interpolator CAMB
+
+# For calculating large-scale structure and lensing results yourself,
+# get a power spectrum interpolation object.
+# In this example we calculate the CMB lensing potential power
+# spectrum using the Limber approximation,
+# using PK=camb.get_matter_power_interpolator() function.
+# calling PK(z, k) will then get power spectrum at any k and redshift z in range.
+
+nz = 100  # number of steps to use for the radial/redshift integration
+kmax = 7   # kmax to use with k_hunit = Mpc/h
+
+# For Limber result, want integration over \chi, from 0 to chi_*.
+# so get background results to find chistar, set up a range in chi,
+# and calculate corresponding redshifts
+results = camb.get_background(pars)
+chistar = results.conformal_time(0) - results.tau_maxvis
+chis = np.linspace(0, chistar, nz)
+zs = results.redshift_at_comoving_radial_distance(chis)
+# Calculate array of delta_chi, and drop first and last points where things go singular
+dchis = (chis[2:]-chis[:-2])/2
+chis = chis[1:-1]
+zs = zs[1:-1]
+
+# Get the matter power spectrum interpolation object.
+# Here for lensing we want the power spectrum of the Weyl potential.
+PK = camb.get_matter_power_interpolator(pars,
+                                        nonlinear=True,
+                                        hubble_units=False,
+                                        k_hunit=True,
+                                        kmax=kmax,
+                                        var1=model.Transfer_tot,
+                                        var2=model.Transfer_tot,
+                                        zmax=zs[-1])
+
+
+
+# Calculation of Cosmic shear power spectrum:
+
+
+# Weight function
+
+
+def Weight_F(z, i, cosmo_pars=dict()):
+    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+    c = const.c.value / 1000
+    cte = (3/2)*((H0/c)**2)*Om
+    return cte*(1 + z)*r(z, cosmo_pars)*Window_F(z, i, cosmo_pars)
+
+
+def int_2(z, i, j, l, cosmo_pars=dict()):
+    I1 = (Weight_F(z, i, cosmo_pars)*Weight_F(z, j, cosmo_pars))/(E(z, cosmo_pars)*(r(z, cosmo_pars)**2))
+    k = (l + (1/2))/r(z, cosmo_pars)
+    PMS = PK.P(z, k)
+    return I1*PMS
+
+
+def C(l, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     c = const.c.value / 1000
     cte = (c/H0)
-    E = lambda z: np.sqrt(Om*(1+z)**3 + OL + Ok*(1+z)**2)
-    r = lambda z: 1/ E(z)
-    
-    return 
+    I1 = integrate.quad(int_2, limits[0], limits[1], args=(i, j, l, cosmo_pars))[0]
+    return cte*I1
+
+
+cosmic_shear_array = np.zeros((200, 10, 10))
+for l in range(100, 301):
+    for i in range(10):
+        for j in range(10):
+            cosmic_shear_array[l-100, i, j] = C(l, i, j)
+            print("i: %f, j: %f" %(i, j), end = '\r')
+
+reshape_cosmic = np.reshape(cosmic_shear_array, (cosmic_shear_array.shape[0], -1))
+
+np.savetxt('quad_convergence/convergence_file', reshape_cosmic)
+
+# load_cosmic = np.loadtxt('Convergence/quad_file.txt')
+
+# cosmic_shear_array = np.reshape(load_cosmic, (load_cosmic.shape[0], load_cosmic.shape[1] // 10, 10))
+# np.save('quad_convergence/quad_file.text', C)
+
+
+
+
