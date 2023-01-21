@@ -582,23 +582,26 @@ def C(l, i, j, cosmo_pars=dict()):
 
 # np.savetxt('quad_convergence/quad_file', reshape_cosmic)
 
-Convergence_l_n = np.loadtxt('quad_convergence/quad_file.txt')
+C_l_n = np.loadtxt('quad_convergence/quad_file.txt')
 
-Convergence_l_i_j = np.reshape(Convergence_l_n,
-                                 (Convergence_l_n.shape[0], Convergence_l_n.shape[1]
-                                  // 10, 10))
+C_l_i_j = np.reshape(C_l_n, (C_l_n.shape[0],
+                             C_l_n.shape[1]
+                             // 10, 10))
+
 np.save('quad_convergence/quad_file', C)
 
-lst_C_l = {}
+lst_C_l = dict()
+for l in range(200):
+    lst_C_l['C_bin_%s'%(str(l))] = C_l_n[l]
+    # for i in range(10):
+    #     lst_C_l['C_bin_{%%}']
+    #     for j in range(10):
 
-for i in range(200):
-    lst_C_l['C_bin_%s'%(str(i))] = Convergence_l_n[i]
+
 
 
 # FIHSER MATRIX
-
 l_lst = np.linspace(10, 1500, 100)
-
 
 def Delta_l(i):
     lamba_min = np.log(l_lst[0])
@@ -610,18 +613,22 @@ def Delta_l(i):
     return 10**(lambda_k_1) - 10**(lambda_k)
 
 
-def Cov(i, j, cosmo_pars=dict()):
+def Cov(i, j, m, n):
     f_sky = 1/15000
-    # term_1 = 
-    # term_2 = 
-    term_3 = (2*m + 1)*f_sky*Delta_l(i)
-    return ((term_1 + term_2)/term_3) * np.kron(m, n)
+    #delta_l = l_lst[-1] - l_lst[0]
+    M = np.zeros((100, 100))
+    for x, l in enumerate(np.arange(100, 200)):
+        term_1 = C_l_i_j[l-100, i, m]* C_l_i_j[l-100, j, n]
+        term_2 = C_l_i_j[l-100, i, n]* C_l_i_j[l-100, j, m]
+        term_3 = (2*l + 1)*f_sky*Delta_l(i)
+        M[x, x] = (term_1 + term_2) / term_3
+    return M
 
 
-def Obs_E(l, i, j, cosmo_pars=dict()):
+def Obs_E(l):
     f_sky = 1/15000
     # delta_l = l_lst[-1] - l_lst[0]
-    return np.sqrt(2/((2*l + 1)*Delta_l(i)*f_sky))*cosmic_shear_array[l]
+    return np.sqrt(2/((2*l + 1)*Delta_l(i)*f_sky))*C_l_i_j[l]
 
 
 def K_yy(z, i, j, cosmo_pars=dict()):
@@ -641,6 +648,45 @@ def shot_noice(l, i, j):
     return (sigma_e/n)*np.kron(i, j)
 
 
+
+
+i, j = 0, 0
+m, n = 0, 0
+fig, ax = plt.subplots()
+
+im = ax.imshow(Cov(i, j, m, n))
+ax.set_title('Cov$[C_{%i%i}^{\gamma\gamma}(\ell), C_{%i%i}^{\gamma\gamma}(\ell)]$'%(i,j,m,n))
+ax.set_ylim(ax.get_ylim()[::-1])
+fig.colorbar(im)
+fig.show()
+
+fig, ax = plt.subplots()
+
+ell = 100
+im = ax.imshow(Obs_E(ell))
+ax.set_title('$\Delta C_{ij}^{\gamma\gamma}(\ell=%i)$'%ell)
+ax.set_ylim(ax.get_ylim()[::-1])
+fig.colorbar(im)
+fig.show()
+
+fig, ax = plt.subplots()
+ltoplt = np.arange(100, 300)
+# ls = np.arange(100, 1501)
+
+
+for l in ltoplt:
+    lo = ax.scatter(l, l*(l+1)*C_l_i_j[l-100, 1, 1]/(2*np.pi), c='mediumpurple', s=2)
+    ll = ax.scatter(l, l*(l+1)*C_l_i_j[l-100, 9, 9]/(2*np.pi), c='darkturquoise', s=2)
+ax.set_xlim((100, 300))
+ax.set_xlabel('Multipole $\ell$')
+ax.set_ylabel("$C_{1,1}$ v.s $C_{9,9}$");
+ax.legend((lo, ll),
+           ('C_{1,1}', 'C_{9,9}'),
+           scatterpoints=1,
+           loc='center right',
+           ncol=2,
+           fontsize=10)
+fig.show()
 # DERIVATES
 
 
