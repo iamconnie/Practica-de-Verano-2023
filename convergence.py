@@ -394,17 +394,20 @@ def C(l, i, j, cosmo_pars=dict()):
     I1 = integrate.quad(int_2, limits[0], limits[1], args=(i, j, l, cosmo_pars))[0]
     return cte*I1
 
+ls = np.logspace(1, np.log10(1500), 101)
+l_bins = [(ls[i], ls[i + 1]) for i in range(100)]
+ls_eval = np.array([(l_bins[i][1] + l_bins[i][0]) / 2 for i in range(100)])
 
-cosmic_shear_array = np.zeros((200, 10, 10))
-for l in range(100, 301):
+cosmic_shear_array = np.zeros((len(ls_eval), 10, 10))
+for idx, ell in enumerate(ls_eval):
     for i in range(10):
         for j in range(10):
-            cosmic_shear_array[l-100, i, j] = C(l, i, j)
-            print("i: %f, j: %f" %(i, j), end = '\r')
+            cosmic_shear_array[idx, i, j] = C(ell, i, j)
+            print('ell: %f'% (ell), end= '\r')
 
 reshape_cosmic = np.reshape(cosmic_shear_array, (cosmic_shear_array.shape[0], -1))
 
-np.savetxt('quad_convergence/convergence_file', reshape_cosmic)
+np.savetxt('Convergence/convergence_file', reshape_cosmic)
 
 # load_cosmic = np.loadtxt('Convergence/quad_file.txt')
 
