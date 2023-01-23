@@ -732,79 +732,70 @@ def int_d_ln_tilder(z, dz=str(), cosmo_pars=dict()):
 
 def d_ln_tilder(z, dz=str(), cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+
+    z_int = np.linspace(0, z, 200)
     if dz == "Om":
-        return 1/2*tilde_r(z, cosmo_pars)*integrate.quad(
-            int_d_ln_tilder, 0, z, args=("Om", cosmo_pars))[0]
+        return 1/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"Om",cosmo_pars), z_int)
     elif dz == "ODE":
-        return 1/2*tilde_r(z, cosmo_pars)*integrate.quad(
-            int_d_ln_tilder, 0, z, args=("ODE", cosmo_pars))[0]
+        return 1/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"ODE",cosmo_pars), z_int)
     elif dz == "w0":
-        return 3/2*tilde_r(z, cosmo_pars)*integrate.quad(
-            int_d_ln_tilder, 0, z, args=("w0", cosmo_pars))[0]
+        return 3/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"w0",cosmo_pars), z_int)
     elif dz == "wa":
-        return 3/2*tilde_r(z, cosmo_pars)*integrate.quad(
-            int_d_ln_tilder, 0, z, args=("wa", cosmo_pars))[0]
+        return 3/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"wa",cosmo_pars), z_int)
     elif dz == "h":
         return -1/(H0/100)
     else:
         return "Error"
 
 
-def int1_d_ln_W(zi, z, i, cosmo_pars=dict()):
-    term_1 = tilde_r(zi) - tilde_r(z)
-    return (n_i(zi, i)*(term_1/tilde_r(zi)))**(-1)
-
 
 def int2_d_ln_W(zi, z, i, dz=str(), cosmo_pars=dict()):
-    term_1 = tilde_r(z, cosmo_pars)/tilde_r(zi, cosmo_pars)
+    term_1 = interpolate_n_i['I_%s' % (str(i))](zi) * tilde_r(z,
+            cosmo_pars)/tilde_r(zi, cosmo_pars)
     if dz == "Om":
         term_2 = (d_ln_tilder(zi, "Om", cosmo_pars)
                   - d_ln_tilder(z, "Om", cosmo_pars))
-        return n_i(zi, i)*term_2*term_1
+        return term_2*term_1
     elif dz == "ODE":
         term_2 = (d_ln_tilder(zi, "ODE", cosmo_pars)
                   - d_ln_tilder(z, "ODE", cosmo_pars))
-        return n_i(zi, i)*term_2*term_1
+        return term_2*term_1
     elif dz == "w0":
         term_2 = (d_ln_tilder(zi, "w0", cosmo_pars)
                   - d_ln_tilder(z, "w0", cosmo_pars))
-        return n_i(zi, i)*term_2*term_1
+        return term_2*term_1
     elif dz == "wa":
         term_2 = (d_ln_tilder(zi, "wa", cosmo_pars)
                   - d_ln_tilder(z, "wa", cosmo_pars))
-        return n_i(zi, i)*term_2*term_1
+        return term_2*term_1
     elif dz == "h":
         term_2 = (d_ln_tilder(zi, "h", cosmo_pars)
                   - d_ln_tilder(z, "h", cosmo_pars))
-        return n_i(zi, i)*term_2*term_1
+        return term_2*term_1
 
 
 def d_ln_W(z, i, dz=str(), cosmo_pars=dict()):
+    z_int = np.linspace(z, limits[1], 200)
+    I1 = Window_F(z, i, cosmo_pars)
     if dz == "Om":
-        I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
-        I2 = integrate.quad(
-            int2_d_ln_W, z, limits[1], args=(z, i, "Om", cosmo_pars))
-        return I1/I2
+        I2 = np.trapz(int2_d_ln_W(z_int, z, i,"Om", cosmo_pars), z_int)
+        return I2/I1
     elif dz == "ODE":
-        I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
         I2 = integrate.quad(
             int2_d_ln_W, z, limits[1], args=(z, i, "ODE", cosmo_pars))
-        return I1/I2
+        return I2/I1
     elif dz == "w0":
-        I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
         I2 = integrate.quad(
             int2_d_ln_W, z, limits[1], args=(z, i, "w0", cosmo_pars))
-        return I1/I2
+        return I2/I1
     elif dz == "wa":
-        I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
         I2 = integrate.quad(
             int2_d_ln_W, z, limits[1], args=(z, i, "wa", cosmo_pars))
-        return I1/I2
+        return I2/I1
     elif dz == "h":
-        I1 = integrate.quad(int1_d_ln_W, z, limits[1], args=(z, i, cosmo_pars))
         I2 = integrate.quad(
             int2_d_ln_W, z, limits[1], args=(z, i, "h", cosmo_pars))
-        return I1/I2
+        return I2/I1
 
 
 def d_ln_K(z, i, j, dz=str(), cosmo_pars=dict()):
@@ -855,9 +846,120 @@ def d_kl(z, l, dz=str(), cosmo_pars=dict()):
         return (-d_ln_tilder(z, "h", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
 
 
-def d_k_mps(z, l, dk=0.01):
+def d_k_MPS(z, l):
+    dk = 0.01
     k = (l + 1/2) / r(z)
-    return (PK.P(z, k+dk) - PK.P(z, k)) / dk
+    return (PK.P(z, k + dk) - PK.P(z, k)) / dk
+
+# parametros con error asociado para obtener pendeinte de MPS
+d_MPS = dict()
+
+d_MPS['Om_s'] = 1 + (1 - pars.omk - results.get_Omega('de')) / 10
+d_MPS['Om_i'] = 1 - (1 - pars.omk - results.get_Omega('de')) / 10
+d_MPS['ODE_s'] = 1 + results.get_Omega('de') / 10
+d_MPS['ODE_i'] = 1 - results.get_Omega('de') / 10
+d_MPS['w_0_s'] = 1 + pars.DarkEnergy.w / 10
+d_MPS['w_0_i'] = 1 - pars.DarkEnergy.w / 10
+d_MPS['w_a_s'] = 1 + pars.DarkEnergy.wa / 10
+d_MPS['w_a_i'] = 1 - pars.DarkEnergy.wa / 10
+
+
+def d_params_PMS(z, l, dz=str()):
+
+    k = (l + 1/2) / r(z)
+    nz = 100  
+    kmax = 7 
+
+    if dz == "Om":
+        pars = camb.CAMBparams()
+        pars.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')   
+        pars.set_cosmology(H0=67.4, ombh2=0.02233, omch2=0.1198, omk=0, tau=0.054)
+        results = camb.get_results(pars)
+
+
+        chistar = results.conformal_time(0) - results.tau_maxvis
+        chis = np.linspace(0, chistar, nz)
+        zs = results.redshift_at_comoving_radial_distance(chis)
+        dchis = (chis[2:]-chis[:-2])/2
+        chis = chis[1:-1]
+        zs = zs[1:-1]
+        PK = camb.get_matter_power_interpolator(pars,
+                                        nonlinear=True,
+                                        hubble_units=False,
+                                        k_hunit=True,
+                                        kmax=kmax,
+                                        var1=model.Transfer_tot,
+                                        var2=model.Transfer_tot,
+                                        zmax=zs[-1])
+    return algo 
+
+
+def d_MPS(z, l, dz=str(), cosmo_pars=dict()):
+    if dz == "Om":
+        return d_params_PMS(z, l, "Om") + d_k_MPS(z, l)*d_kl(z, l, "Om", cosmo_pars)
+    elif dz == "ODE":
+        return d_params_PMS(z, l, "ODE") + d_k_MPS(z, l)*d_kl(z, l, "ODE", cosmo_pars)
+    elif dz == "w0":
+        return d_params_PMS(z, l, "w0") + d_k_MPS(z, l)*d_kl(z, l, "w0", cosmo_pars)
+    elif dz == "wa":
+        return d_params_PMS(z, l, "wa") + d_k_MPS(z, l)*d_kl(z, l, "wa", cosmo_pars)
+    elif dz == "h":
+        return d_params_PMS(z, l, "Oh) + d_k_MPS(z, l)*d_kl(z, l, "h", cosmo_pars)
+
+
+def int_1_C(z, l, i, j, dz=str(), cosmo_pars=dict()):
+    k = (l + 1/2) / r(z)
+    if dz == "Om":
+        return d_K(z, i, j, "Om", cosmo_pars)*PK.P(z, k)
+    elif dz == "ODE":
+        return d_K(z, i, j, "ODE", cosmo_pars)*PK.P(z, k)
+    elif dz == "w0":
+        return d_K(z, i, j, "w0", cosmo_pars)*PK.P(z, k)
+    elif dz == "wa":
+        return d_K(z, i, j, "wa", cosmo_pars)*PK.P(z, k)
+    elif dz == "h":
+        return d_K(z, i, j, "h", cosmo_pars)*PK.P(z, k)
+    
+def int_2_C(z, l, i, j, dz=str(), cosmo_pars=dict()):
+    k = (l + 1/2) / r(z)
+    if dz == "Om":
+        return K_yy(z, l, "Om")*d_MPS(z, l, "Om")
+    elif dz == "ODE":
+        return K_yy(z, l, "ODE")*d_MPS(z, l, "ODE")
+    elif dz == "w0":
+        return K_yy(z, l, "w0")*d_MPS(z, l, "w0")
+    elif dz == "wa":
+        return K_yy(z, l, "wa")*d_MPS(z, l, "wa")
+    elif dz == "h":
+        return K_yy(z, l, "h")*d_MPS(z, l, "h")
+
+
+def d_C(l, i, j, dz=str(), cosmo_pars=dict()):
+    z_int = np.linspace(limits[0], limits[1], 200)
+    if dz == "Om":
+        I1 = np.trapz(int_1_C(z_int, l, i, j, "Om", cosmo_pars), z_int)
+        I2 = np.trapz(int_2_C(z_int, l, i, j, "Om", cosmo_pars), z_int)
+        return I1 * I2
+    elif dz == "ODE":
+        I1 = np.trapz(int_1_C(z_int, l, i, j, "ODE", cosmo_pars), z_int)
+        I2 = np.trapz(int_2_C(z_int, l, i, j, "ODE", cosmo_pars), z_int)
+        return I1 * I2
+    elif dz == "w0":
+        I1 = np.trapz(int_1_C(z_int, l, i, j, "w0", cosmo_pars), z_int)
+        I2 = np.trapz(int_2_C(z_int, l, i, j, "wa", cosmo_pars), z_int)
+        return I1 * I2
+    elif dz == "wa":
+        I1 = np.trapz(int_1_C(z_int, l, i, j, "wa", cosmo_pars), z_int)
+        I2 = np.trapz(int_2_C(z_int, l, i, j, "wa", cosmo_pars), z_int)
+        return I1 * I2
+    elif dz == "h":
+        I1 = np.trapz(int_1_C(z_int, l, i, j, "h", cosmo_pars), z_int)
+        I2 = np.trapz(int_2_C(z_int, l, i, j, "h", cosmo_pars), z_int)
+        return I1 * I2
+
+
+
+
 
 
 # EXTRA Compact Notation with Kernel functions
