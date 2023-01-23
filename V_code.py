@@ -635,235 +635,12 @@ def Obs_E(l):
     return np.sqrt(2/((2*l + 1)*Delta_l(i)*f_sky))*C_l_i_j[l]
 
 
-def K_yy(z, i, j, cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value / 1000
-    cte = (H0/c)**3
-    term_1 = ((3/2)*Om*(1 + z))**2
-    term_2 = ((Window_F(z, i, cosmo_pars)*Window_F(z, j, cosmo_pars))
-              / E(z, cosmo_pars))
-    return term_1*cte*term_2
-
-
-def shot_noice(l, i, j):
-    ng = 354543085.80106884
-    sigma_e = 0.30
-    n = ng/10
-    return (sigma_e/n)*np.kron(i, j)
-
-
-
-
-i, j = 0, 0
-m, n = 0, 0
-fig, ax = plt.subplots()
-
-im = ax.imshow(Cov(i, j, m, n))
-ax.set_title('Cov$[C_{%i%i}^{\gamma\gamma}(\ell), C_{%i%i}^{\gamma\gamma}(\ell)]$'%(i,j,m,n))
-ax.set_ylim(ax.get_ylim()[::-1])
-fig.colorbar(im)
-fig.show()
-
-fig, ax = plt.subplots()
-
-ell = 100
-im = ax.imshow(Obs_E(ell))
-ax.set_title('$\Delta C_{ij}^{\gamma\gamma}(\ell=%i)$'%ell)
-ax.set_ylim(ax.get_ylim()[::-1])
-fig.colorbar(im)
-fig.show()
-
-fig, ax = plt.subplots()
-ltoplt = np.arange(100, 300)
-# ls = np.arange(100, 1501)
-
-
-for l in ltoplt:
-    lo = ax.scatter(l, l*(l+1)*C_l_i_j[l-100, 1, 1]/(2*np.pi), c='mediumpurple', s=2)
-    ll = ax.scatter(l, l*(l+1)*C_l_i_j[l-100, 9, 9]/(2*np.pi), c='darkturquoise', s=2)
-ax.set_xlim((100, 300))
-ax.set_xlabel('Multipole $\ell$')
-ax.set_ylabel("$C_{1,1}$ v.s $C_{9,9}$");
-ax.legend((lo, ll),
-           ('C_{1,1}', 'C_{9,9}'),
-           scatterpoints=1,
-           loc='center right',
-           ncol=2,
-           fontsize=10)
-fig.show()
-# DERIVATES
-
-
-def d_ln_E(z, dz=str(), cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    T1 = (1 + z)**3
-    T2 = (1 + z)**2
-    E_2 = E(z)**2
-    e_1 = 1 + w0 + wa
-    e_2 = -(3*wa*z)/(1 + z)
-    E_ln = np.log(1 + z) - (z/(1+z))
-    if dz == "Om":
-        return (1/2)*((T1 - T2)/E_2)
-    elif dz == "ODE":
-        return (1/2)*(((T1**e_1)*np.exp(e_2) - T2)/E_2)
-    elif dz == "w0":
-        return (3/2)*((Omega_Lambda(Om)*(T1**e_1)*np.exp(e_2)*np.log(1 + z))/E_2)
-    elif dz == "wa":
-        return (3/2)*((Omega_Lambda(Om)*(T1**e_1)*np.exp(e_2)*E_ln)/E_2)
-    else:
-        return "Error"
-
-
-def int_d_ln_tilder(z, dz=str(), cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    T1 = (1 + z)**3
-    T2 = (1 + z)**2
-    E_3 = E(z)**3
-    e_1 = 1 + w0 + wa
-    e_2 = -(3*wa*z)/(1 + z)
-    E_ln = np.log(1 + z) - (z/(1+z))
-    if dz == "Om":
-        return (1/2)*((T1 - T2)/E_3)
-    elif dz == "ODE":
-        return (1/2)*(((T1**e_1)*np.exp(e_2) - T2)/E_3)
-    elif dz == "w0":
-        return (3/2)*((ODE*(T1**e_1)*np.exp(e_2)*np.log(1 + z))/E_3)
-    elif dz == "wa":
-        return (3/2)*((ODE*(T1**e_1)*np.exp(e_2)*E_ln)/E_3)
-    else:
-        return "Error"
-
-
-def d_ln_tilder(z, dz=str(), cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-
-    z_int = np.linspace(0, z, 200)
-    if dz == "Om":
-        return 1/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"Om",cosmo_pars), z_int)
-    elif dz == "ODE":
-        return 1/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"ODE",cosmo_pars), z_int)
-    elif dz == "w0":
-        return 3/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"w0",cosmo_pars), z_int)
-    elif dz == "wa":
-        return 3/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"wa",cosmo_pars), z_int)
-    elif dz == "h":
-        return -1/(H0/100)
-    else:
-        return "Error"
-
-
-
-def int2_d_ln_W(zi, z, i, dz=str(), cosmo_pars=dict()):
-    term_1 = (interpolate_n_i['I_%s' % (str(i))](zi) *
-              tilde_r(z, cosmo_pars)/tilde_r(zi, cosmo_pars))
-    if dz == "Om":
-        term_2 = (d_ln_tilder(zi, "Om", cosmo_pars)
-                  - d_ln_tilder(z, "Om", cosmo_pars))
-        return term_2*term_1
-    elif dz == "ODE":
-        term_2 = (d_ln_tilder(zi, "ODE", cosmo_pars)
-                  - d_ln_tilder(z, "ODE", cosmo_pars))
-        return term_2*term_1
-    elif dz == "w0":
-        term_2 = (d_ln_tilder(zi, "w0", cosmo_pars)
-                  - d_ln_tilder(z, "w0", cosmo_pars))
-        return term_2*term_1
-    elif dz == "wa":
-        term_2 = (d_ln_tilder(zi, "wa", cosmo_pars)
-                  - d_ln_tilder(z, "wa", cosmo_pars))
-        return term_2*term_1
-    elif dz == "h":
-        term_2 = (d_ln_tilder(zi, "h", cosmo_pars)
-                  - d_ln_tilder(z, "h", cosmo_pars))
-        return term_2*term_1
-
-
-def d_ln_W(z, i, dz=str(), cosmo_pars=dict()):
-    I1 = Window_F(z, i, cosmo_pars)
-    if dz == "Om":
-        I2 = integrate.quad(
-            int2_d_ln_W, z, limits[1], args=(z, i,"Om", cosmo_pars))[0]
-        return I2/I1
-    elif dz == "ODE":
-        I2 = integrate.quad(
-            int2_d_ln_W, z, limits[1], args=(z, i, "ODE", cosmo_pars))[0]
-        return I2/I1
-    elif dz == "w0":
-        I2 = integrate.quad(
-            int2_d_ln_W, z, limits[1], args=(z, i, "w0", cosmo_pars))[0]
-        return I2/I1
-    elif dz == "wa":
-        I2 = integrate.quad(
-            int2_d_ln_W, z, limits[1], args=(z, i, "wa", cosmo_pars))[0]
-        return I2/I1
-    elif dz == "h":
-        I2 = integrate.quad(
-            int2_d_ln_W, z, limits[1], args=(z, i, "h", cosmo_pars))[0]
-        return I2/I1
-
-
-def d_ln_K(z, i, j, dz=str(), cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    if dz == "Om":
-        return ((2/Om) - d_ln_E(z, "Om", cosmo_pars)
-                + d_ln_W(z, i, "Om", cosmo_pars)
-                + d_ln_W(z, j, "Om", cosmo_pars))
-    elif dz == "ODE":
-        return (- d_ln_E(z, "ODE", cosmo_pars)
-                + d_ln_W(z, i, "ODE", cosmo_pars)
-                + d_ln_W(z, j, "ODE", cosmo_pars))
-    elif dz == "w0":
-        return (- d_ln_E(z, "w0", cosmo_pars)
-                + d_ln_W(z, i, "w0", cosmo_pars)
-                + d_ln_W(z, j, "w0", cosmo_pars))
-    elif dz == "wa":
-        return (- d_ln_E(z, "wa", cosmo_pars)
-                + d_ln_W(z, i, "wa", cosmo_pars)
-                + d_ln_W(z, j, "wa", cosmo_pars))
-    elif dz == "h":
-        return 3/(H0/100)
-
-
-def d_K(z, i, j, dz=str(), cosmo_pars=dict()):
-    term_1 = K_yy(z, i, j, cosmo_pars)
-    if dz == "Om":
-        return term_1*d_ln_K(z, i, j, "Om", cosmo_pars)
-    elif dz == "ODE":
-        return term_1*d_ln_K(z, i, j, "ODE", cosmo_pars)
-    elif dz == "w0":
-        return term_1*d_ln_K(z, i, j, "w0", cosmo_pars)
-    elif dz == "wa":
-        return term_1*d_ln_K(z, i, j, "wa", cosmo_pars)
-    elif dz == "h":
-        return term_1*d_ln_K(z, i, j, "h", cosmo_pars)
-
-
-def d_kl(z, l, dz=str(), cosmo_pars=dict()):
-    if dz == "Om":
-        return (-d_ln_tilder(z, "Om", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
-    elif dz == "ODE":
-        return (-d_ln_tilder(z, "ODE", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
-    elif dz == "w0":
-        return (-d_ln_tilder(z, "w0", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
-    elif dz == "wa":
-        return (-d_ln_tilder(z, "wa", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
-    elif dz == "h":
-        return (-d_ln_tilder(z, "h", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
-
-
-def d_k_MPS(z, l):
-    dk = 0.01
-    k = (l + 1/2) / r(z)
-    return (PK.P(z, k + dk) - PK.P(z, k)) / dk
-
-# parametros con error asociado para obtener pendeinte de MPS
-
 dict_MPS = dict()
 
 dict_MPS['Omegam'] = 0.32
 dict_MPS['Omegab'] = 0.05
 dict_MPS['Omegade'] = 0.68
-dict_MPS['Omegach2'] = 0.12055785610846023
+dict_MPS['Omegach2'] =  0.2685628338348412
 dict_MPS['w0'] = -1.0
 dict_MPS['wa'] = 0
 dict_MPS['hubble'] = 0.67
@@ -871,318 +648,293 @@ dict_MPS['ns'] = 0.96
 dict_MPS['sigma8'] = 0.815584
 dict_MPS['gamma'] = 0.55
 
+locals().update(dict_MPS)
 
-
-def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
-    dx = 0.01
-    nz = 100  
-    kmax = 7 
+def mps_param(param, dx=0.01):
+    locals().update(dict_MPS)
     pars_l = camb.CAMBparams()
     pars_u = camb.CAMBparams()
-    lst_Om_l = []
-    lst_Om_u = []
-    lst_ODE_l = []
-    lst_ODE_u = []
-    lst_w0_l = []
-    lst_w0_u = []
-    lst_wa_l = []
-    lst_wa_u = []
-    lst_h_l = []
-    lst_h_u = []
-    if dz == "Om":
+    if param == 'Omegam':
         Omegab_l, Omegab_u = (1 - dx) * dict_MPS['Omegab'], (1 + dx) * dict_MPS['Omegab']
-        Omegach2_l, Omegach2_u = (1 - dx) * dict_MPS['Omegach2'], (1 + dx) * dict_MPS['Omegach2']
+        Omegach2_l, Omegach2_u = (1 - dx) * dict_MPS['Omegach2'] *dict_MPS['hubble']**2, (1 + dx) * dict_MPS['Omegach2'] *dict_MPS['hubble']**2
 
         pars_l.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
         pars_u.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
         pars_l.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=Omegab_l *
-                             dict_MPS['hubble']**2, omch2=Omegach2_l, tau = 0.058)
+                             dict_MPS['hubble']**2, omch2=Omegach2_l, tau=0.058)
         pars_u.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=Omegab_u *
-                             dict_MPS['hubble']**2, omch2=Omegach2_u, tau = 0.058)
-        pars.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')   
-        pars.set_cosmology(H0=67.4, ombh2=0.02233, omch2=0.1198, omk=0, tau = 0.054)
+                             dict_MPS['hubble']**2, omch2=Omegach2_u, tau=0.058)
+        pars_l.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_u.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_l.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_u.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_l.NonLinearModel.set_params(halofit_version=4)
+        pars_u.NonLinearModel.set_params(halofit_version=4)
+        pars_l.set_accuracy(AccuracyBoost=2)
+        pars_u.set_accuracy(AccuracyBoost=2)
+        # Linear spectra
+        pars_l.NonLinear = model.NonLinear_none
+        pars_u.NonLinear = model.NonLinear_none
         results_l = camb.get_results(pars_l)
         results_u = camb.get_results(pars_u)
-        chistar_l = results_l.conformal_time(0) - results_l.tau_maxvis
-        chistar_u = results_u.conformal_time(0) - results_u.tau_maxvis
-        chis_l = np.linspace(0, chistar_l, nz)
-        chis_u = np.linspace(0, chistar_u, nz)
-        zs_l = results_l.redshift_at_comoving_radial_distance(chis_l)
-        zs_u = results_u.redshift_at_comoving_radial_distance(chis_u)
-        dchis_l = (chis_l[2:]-chis_l[:-2])/2
-        dchis_u = (chis_u[2:]-chis_u[:-2])/2
-        chis_l = chis_l[1:-1]
-        chis_u = chis_u[1:-1]
-        zs_l = zs_l[1:-1]
-        zs_u = zs_u[1:-1]
-        PK_l = camb.get_matter_power_interpolator(pars_l,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
-        PK_u = camb.get_matter_power_interpolator(pars_u,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
-        
-        for l in ls_eval:
-            k = (l + 1/2) / r(z)
-            lst_Om_l.append(PK_l.P(z , k))
-            lst_Om_u.append(PK_u.P(z , k))
-            return np.polyfit(lst_Om_l, lst_Om_u, 1)[0]
-    elif dz == "ODE":
-        return 0
-    
-    elif dz == "w0":
-        w0_l, w0_u = (1 - dx) * dict_MPS['w0'], (1 + dx) * dict_MPS['w0']
-        pars_l.set_dark_energy(w=w0_l, wa=dict_MPS['wa'], dark_energy_model='fluid')
-        pars_u.set_dark_energy(w=w0_u, wa=dict_MPS['wa'], dark_energy_model='fluid')
-        pars_l.set_cosmology(H0=67.4, ombh2=0.02233, omch2=0.1198, omk=0, tau=0.054)
-        pars_u.set_cosmology(H0=67.4, ombh2=0.02233, omch2=0.1198, omk=0, tau=0.054)
+        kh_l, z_l, pk_l = results_l.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+        kh_u, z_u, pk_u = results_u.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+
+        # Store data for this model
+        dict_mps_data = {'kh_l': kh_l, 'z_l': z_l, 'pk_l': pk_l,
+                         'kh_u': kh_u, 'z_u': z_u, 'pk_u': pk_u}
+
+        for rslt in dict_mps_data:
+            np.savetxt('mps_data/Omegam_'+rslt, dict_mps_data[rslt])
+
+    elif param == 'Omegab':
+        Omegab_l, Omegab_u = (1 - dx) * dict_MPS['Omegab'], (1 + dx) * dict_MPS['Omegab']
+        pars_l.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
+        pars_u.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
+        pars_l.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=Omegab_l*dict_MPS['hubble']**2,
+                             omch2=dict_MPS['Omegach2']*dict_MPS['hubble']**2, tau=0.058)
+        pars_u.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=Omegab_u*dict_MPS['hubble']**2,
+                             omch2=dict_MPS['Omegach2']*dict_MPS['hubble']**2, tau=0.058)
+        pars_l.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_u.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_l.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_u.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_l.NonLinearModel.set_params(halofit_version=4)
+        pars_u.NonLinearModel.set_params(halofit_version=4)
+        pars_l.set_accuracy(AccuracyBoost=2)
+        pars_u.set_accuracy(AccuracyBoost=2)
+        # Linear spectra
+        pars_l.NonLinear = model.NonLinear_none
+        pars_u.NonLinear = model.NonLinear_none
         results_l = camb.get_results(pars_l)
         results_u = camb.get_results(pars_u)
-        chistar_l = results_l.conformal_time(0) - results_l.tau_maxvis
-        chistar_u = results_u.conformal_time(0) - results_u.tau_maxvis
-        chis_l = np.linspace(0, chistar_l, nz)
-        chis_u = np.linspace(0, chistar_u, nz)
-        zs_l = results_l.redshift_at_comoving_radial_distance(chis_l)
-        zs_u = results_u.redshift_at_comoving_radial_distance(chis_u)
-        dchis_l = (chis_l[2:]-chis_l[:-2])/2
-        dchis_u = (chis_u[2:]-chis_u[:-2])/2
-        chis_l = chis_l[1:-1]
-        chis_u = chis_u[1:-1]
-        zs_l = zs_l[1:-1]
-        zs_u = zs_u[1:-1]
-        PK_l = camb.get_matter_power_interpolator(pars_l,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
-        PK_u = camb.get_matter_power_interpolator(pars_u,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
-        for l in ls_eval:
-            k = (l + 1/2) / r(z)
-            lst_w0_l.append(PK_l.P(z, k))
-            lst_w0_u.append(PK_u.P(z, k))
-            return np.polyfit(lst_w0_l, lst_w0_u, 1)[0]
-    
-    elif dz == "wa":
-        wa_l, wa_u = (1 - dx) * dict_MPS['wa'], (1 + dx) * dict_MPS['wa']
-        pars_l.set_dark_energy(w=dict_MPS['w0'], wa=wa_l, dark_energy_model='fluid')
-        pars_u.set_dark_energy(w=dict_MPS['w0'], wa=wa_u, dark_energy_model='fluid')
-        pars_l.set_cosmology(H0=67.4, ombh2=0.02233, omch2=0.1198, omk=0, tau=0.054)
-        pars_u.set_cosmology(H0=67.4, ombh2=0.02233, omch2=0.1198, omk=0, tau=0.054)
+        kh_l, z_l, pk_l = results_l.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+        kh_u, z_u, pk_u = results_u.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+
+        # Store data for this model
+        dict_mps_data = {'kh_l': kh_l, 'z_l': z_l, 'pk_l': pk_l,
+                         'kh_u': kh_u, 'z_u': z_u, 'pk_u': pk_u}
+
+        for rslt in dict_mps_data:
+            np.savetxt('mps_data/Omegab_'+rslt, dict_mps_data[rslt])
+
+    elif param == 'ns':
+        ns_l, ns_u = (1 - dx) * dict_MPS['ns'], (1 + dx) * dict_MPS['ns']
+
+        pars_l.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
+        pars_u.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
+        pars_l.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=dict_MPS['Omegab'] *
+                             dict_MPS['hubble']**2, omch2=dict_MPS['Omegach2']*dict_MPS['hubble']**2, tau=0.058)
+        pars_u.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=dict_MPS['Omegab'] *
+                             dict_MPS['hubble']**2, omch2=dict_MPS['Omegach2']*dict_MPS['hubble']**2, tau=0.058)
+        pars_l.InitPower.set_params(As=2.1260500000000005e-9, ns=ns_l)
+        pars_u.InitPower.set_params(As=2.1260500000000005e-9, ns=ns_u)
+        pars_l.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_u.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_l.NonLinearModel.set_params(halofit_version=4)
+        pars_u.NonLinearModel.set_params(halofit_version=4)
+        pars_l.set_accuracy(AccuracyBoost=2)
+        pars_u.set_accuracy(AccuracyBoost=2)
+        # Linear spectra
+        pars_l.NonLinear = model.NonLinear_none
+        pars_u.NonLinear = model.NonLinear_none
         results_l = camb.get_results(pars_l)
         results_u = camb.get_results(pars_u)
-        chistar_l = results_l.conformal_time(0) - results_l.tau_maxvis
-        chistar_u = results_u.conformal_time(0) - results_u.tau_maxvis
-        chis_l = np.linspace(0, chistar_l, nz)
-        chis_u = np.linspace(0, chistar_u, nz)
-        zs_l = results_l.redshift_at_comoving_radial_distance(chis_l)
-        zs_u = results_u.redshift_at_comoving_radial_distance(chis_u)
-        dchis_l = (chis_l[2:]-chis_l[:-2])/2
-        dchis_u = (chis_u[2:]-chis_u[:-2])/2
-        chis_l = chis_l[1:-1]
-        chis_u = chis_u[1:-1]
-        zs_l = zs_l[1:-1]
-        zs_u = zs_u[1:-1]
-        PK_l = camb.get_matter_power_interpolator(pars_l,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
-        PK_u = camb.get_matter_power_interpolator(pars_u,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
-        for l in ls_eval:
-            k = (l + 1/2) / r(z)
-            lst_wa_l.append(PK_l.P(z , k))
-            lst_wa_u.append(PK_u.P(z , k))
-            return np.polyfit(lst_wa_l, lst_wa_u, 1)[0]
-        
-    elif dz == "h":
+        kh_l, z_l, pk_l = results_l.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+        kh_u, z_u, pk_u = results_u.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+
+        # Store data for this model
+        dict_mps_data = {'kh_l': kh_l, 'z_l': z_l, 'pk_l': pk_l,
+                         'kh_u': kh_u, 'z_u': z_u, 'pk_u': pk_u}
+
+        for rslt in dict_mps_data:
+            np.savetxt('mps_data/ns_'+rslt, dict_mps_data[rslt])
+
+    elif param == 'hubble':
         hubble_l, hubble_u = (1 - dx) * dict_MPS['hubble'], (1 + dx) * dict_MPS['hubble']
 
         pars_l.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
         pars_u.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
         pars_l.set_cosmology(H0=hubble_l*100, ombh2=dict_MPS['Omegab'] *
-                             hubble_l**2, omch2=dict_MPS['Omegac']*hubble_l**2, tau=0.058)
-        pars_u.set_cosmology(H0=hubble_l*100, ombh2=dict_MPS['Omegab'] *
-                             hubble_u**2, omch2=dict_MPS['Omegac']*hubble_u**2, tau=0.058)
+                             hubble_l**2, omch2=dict_MPS['Omegach2']*hubble_l**2, tau=0.058)
+        pars_u.set_cosmology(H0=hubble_u*100, ombh2=dict_MPS['Omegab'] *
+                             hubble_u**2, omch2=dict_MPS['Omegach2']*hubble_u**2, tau=0.058)
+        pars_l.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_u.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_l.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/hubble_l)
+        pars_u.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/hubble_u)
+        pars_l.NonLinearModel.set_params(halofit_version=4)
+        pars_u.NonLinearModel.set_params(halofit_version=4)
+        pars_l.set_accuracy(AccuracyBoost=2)
+        pars_u.set_accuracy(AccuracyBoost=2)
+        # Linear spectra
+        pars_l.NonLinear = model.NonLinear_none
+        pars_u.NonLinear = model.NonLinear_none
         results_l = camb.get_results(pars_l)
         results_u = camb.get_results(pars_u)
-        chistar_l = results_l.conformal_time(0) - results_l.tau_maxvis
-        chistar_u = results_u.conformal_time(0) - results_u.tau_maxvis
-        chis_l = np.linspace(0, chistar_l, nz)
-        chis_u = np.linspace(0, chistar_u, nz)
-        zs_l = results_l.redshift_at_comoving_radial_distance(chis_l)
-        zs_u = results_u.redshift_at_comoving_radial_distance(chis_u)
-        dchis_l = (chis_l[2:]-chis_l[:-2])/2
-        dchis_u = (chis_u[2:]-chis_u[:-2])/2
-        chis_l = chis_l[1:-1]
-        chis_u = chis_u[1:-1]
-        zs_l = zs_l[1:-1]
-        zs_u = zs_u[1:-1]
-        PK_l = camb.get_matter_power_interpolator(pars_l,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
-        PK_u = camb.get_matter_power_interpolator(pars_u,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
-        for l in ls_eval:
-            k = (l + 1/2) / r(z)
-            lst_h_l.append(PK_l.P(z , k))
-            lst_h_u.append(PK_u.P(z , k))
-            return np.polyfit(lst_h_l, lst_h_u, 1)[0]
+        kh_l, z_l, pk_l = results_l.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+        kh_u, z_u, pk_u = results_u.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+
+        # Store data for this model
+        dict_mps_data = {'kh_l': kh_l, 'z_l': z_l, 'pk_l': pk_l,
+                         'kh_u': kh_u, 'z_u': z_u, 'pk_u': pk_u}
+
+        for rslt in dict_mps_data:
+            np.savetxt('mps_data/hubble_'+rslt, dict_mps_data[rslt])
+
+    elif param == 'sigma8':
+        hubble_l, hubble_u = (1 - dx) * dict_MPS['hubble'], (1 + dx) * dict_MPS['hubble']
+
+        pars_l.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
+        pars_u.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
+        pars_l.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=dict_MPS['Omegab'] *
+                             dict_MPS['hubble']**2, omch2=dict_MPS['Omegach2']*dict_MPS['hubble']**2, tau=0.058)
+        pars_u.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=dict_MPS['Omegab'] *
+                             dict_MPS['hubble']**2, omch2=dict_MPS['Omegach2']*dict_MPS['hubble']**2, tau=0.058)
+        pars_l.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_u.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_l.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_u.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_l.NonLinearModel.set_params(halofit_version=4)
+        pars_u.NonLinearModel.set_params(halofit_version=4)
+        pars_l.set_accuracy(AccuracyBoost=2)
+        pars_u.set_accuracy(AccuracyBoost=2)
+        # Linear spectra
+        pars_l.NonLinear = model.NonLinear_none
+        pars_u.NonLinear = model.NonLinear_none
+        results_l = camb.get_results(pars_l)
+        results_u = camb.get_results(pars_u)
+        kh_l, z_l, pk_l = results_l.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+        kh_u, z_u, pk_u = results_u.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+
+        # Store data for this model
+        dict_mps_data = {'kh_l': kh_l, 'z_l': z_l, 'pk_l': pk_l,
+                         'kh_u': kh_u, 'z_u': z_u, 'pk_u': pk_u}
+
+        for rslt in dict_mps_data:
+            np.savetxt('mps_data/sigma8_'+rslt, dict_mps_data[rslt])
+    
+    elif param == 'w0':
+        w0_l, w0_u = (1 - dx) * dict_MPS['w0'], (1 + dx) * dict_MPS['w0']
+
+        pars_l.set_dark_energy(w=w0_l, wa=dict_MPS['wa'], dark_energy_model='fluid')
+        pars_u.set_dark_energy(w=w0_u, wa=dict_MPS['wa'], dark_energy_model='fluid')
+        pars_l.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=dict_MPS['Omegab'] *
+                             dict_MPS['hubble']**2, omch2=dict_MPS['Omegach2']*dict_MPS['hubble']**2, tau=0.058)
+        pars_u.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=dict_MPS['Omegab'] *
+                             dict_MPS['hubble']**2, omch2=dict_MPS['Omegach2']*dict_MPS['hubble']**2, tau=0.058)
+        pars_l.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_u.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_l.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_u.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_l.NonLinearModel.set_params(halofit_version=4)
+        pars_u.NonLinearModel.set_params(halofit_version=4)
+        pars_l.set_accuracy(AccuracyBoost=2)
+        pars_u.set_accuracy(AccuracyBoost=2)
+        # Linear spectra
+        pars_l.NonLinear = model.NonLinear_none
+        pars_u.NonLinear = model.NonLinear_none
+        results_l = camb.get_results(pars_l)
+        results_u = camb.get_results(pars_u)
+        kh_l, z_l, pk_l = results_l.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+        kh_u, z_u, pk_u = results_u.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+
+        # Store data for this model
+        dict_mps_data = {'kh_l': kh_l, 'z_l': z_l, 'pk_l': pk_l,
+                         'kh_u': kh_u, 'z_u': z_u, 'pk_u': pk_u}
+
+        for rslt in dict_mps_data:
+            np.savetxt('mps_data/w0_'+rslt, dict_mps_data[rslt])
+    
+    elif param == 'wa':
+        wa_l, wa_u = (1 - dx) * dict_MPS['wa'], (1 + dx) * dict_MPS['wa']
+
+        pars_l.set_dark_energy(w=dict_MPS['w0'], wa=wa_l, dark_energy_model='fluid')
+        pars_u.set_dark_energy(w=dict_MPS['w0'], wa=wa_u, dark_energy_model='fluid')
+        pars_l.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=dict_MPS['Omegab'] *
+                             dict_MPS['hubble']**2, omch2=dict_MPS['Omegach2']*dict_MPS['hubble']**2, tau=0.058)
+        pars_u.set_cosmology(H0=dict_MPS['hubble']*100, ombh2=dict_MPS['Omegab'] *
+                             dict_MPS['hubble']**2, omch2=dict_MPS['Omegach2']*dict_MPS['hubble']**2, tau=0.058)
+        pars_l.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_u.InitPower.set_params(As=2.1260500000000005e-9, ns=dict_MPS['ns'])
+        pars_l.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_u.set_matter_power(redshifts=np.linspace(0.001, 2.5, 101), kmax=50/dict_MPS['hubble'])
+        pars_l.NonLinearModel.set_params(halofit_version=4)
+        pars_u.NonLinearModel.set_params(halofit_version=4)
+        pars_l.set_accuracy(AccuracyBoost=2)
+        pars_u.set_accuracy(AccuracyBoost=2)
+        # Linear spectra
+        pars_l.NonLinear = model.NonLinear_none
+        pars_u.NonLinear = model.NonLinear_none
+        results_l = camb.get_results(pars_l)
+        results_u = camb.get_results(pars_u)
+        kh_l, z_l, pk_l = results_l.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+        kh_u, z_u, pk_u = results_u.get_matter_power_spectrum(
+            minkh=1e-4, maxkh=50, npoints=200)
+
+        # Store data for this model
+        dict_mps_data = {'kh_l': kh_l, 'z_l': z_l, 'pk_l': pk_l,
+                         'kh_u': kh_u, 'z_u': z_u, 'pk_u': pk_u}
+
+        for rslt in dict_mps_data:
+            np.savetxt('mps_data/wa_'+rslt, dict_mps_data[rslt])
 
 
+mps_param("w0")
+mps_param("wa")
+mps_param('Omegab')
+
+dict_mps_w0 = {'kh_l': None, 'kh_u': None, 'z_l': None, 'z_u': None, 'pk_l': None, 'pk_u': None}
+dict_mps_wa = {'kh_l': None, 'kh_u': None, 'z_l': None, 'z_u': None, 'pk_l': None, 'pk_u': None} 
+dict_mps_omegab = {'kh_l': None, 'kh_u': None, 'z_l': None, 'z_u': None, 'pk_l': None, 'pk_u': None}
+
+for rslt in dict_mps_w0:
+    dict_mps_omegab[rslt] = np.loadtxt('mps_data/Omegab_'+rslt)
+    dict_mps_w0[rslt] = np.loadtxt('mps_data/w0_'+rslt)
+    dict_mps_wa[rslt] = np.loadtxt('mps_data/wa_'+rslt)
+
+mps_w0_l = interpolate.RectBivariateSpline(dict_mps_w0['z_l'], dict_mps_w0['kh_l'], dict_mps_w0['pk_l'])
+mps_w0_u = interpolate.RectBivariateSpline(dict_mps_w0['z_u'], dict_mps_w0['kh_u'], dict_mps_w0['pk_u'])
+
+mps_wa_l = interpolate.RectBivariateSpline(dict_mps_wa['z_l'], dict_mps_wa['kh_l'], dict_mps_wa['pk_l'])
+mps_wa_u = interpolate.RectBivariateSpline(dict_mps_wa['z_u'], dict_mps_wa['kh_u'], dict_mps_wa['pk_u'])
 
 
+mps_Omegab_l = interpolate.RectBivariateSpline(dict_mps_omegab['z_l'], dict_mps_omegab['kh_l'], dict_mps_omegab['pk_l'])
+mps_Omegab_u = interpolate.RectBivariateSpline(dict_mps_omegab['z_u'], dict_mps_omegab['kh_u'], dict_mps_omegab['pk_u'])
 
-def d_MPS(z, l, dz=str(), cosmo_pars=dict()):
-    if dz == "Om":
-        return d_params_PMS(z, l, "Om") + d_k_MPS(z, l)*d_kl(z, l, "Om", cosmo_pars)
-    elif dz == "ODE":
-        return d_params_PMS(z, l, "ODE") + d_k_MPS(z, l)*d_kl(z, l, "ODE", cosmo_pars)
-    elif dz == "w0":
-        return d_params_PMS(z, l, "w0") + d_k_MPS(z, l)*d_kl(z, l, "w0", cosmo_pars)
-    elif dz == "wa":
-        return d_params_PMS(z, l, "wa") + d_k_MPS(z, l)*d_kl(z, l, "wa", cosmo_pars)
-    elif dz == "h":
-        return d_params_PMS(z, l, "h") + d_k_MPS(z, l)*d_kl(z, l, "h", cosmo_pars)
+dict_mps_interpolation = {'mps_wa_l': mps_wa_l, 'mps_wa_u': mps_wa_u,
+                          'mps_Omegab_l': mps_Omegab_l, 'mps_Omegab_u': mps_Omegab_u,
+                          'mps_w0_l': mps_w0_l, 'mps_Omegab_u': mps_w0_u}
 
 
-def int_1_C(z, l, i, j, dz=str(), cosmo_pars=dict()):
-    k = (l + 1/2) / r(z)
-    if dz == "Om":
-        return d_K(z, i, j, "Om", cosmo_pars)*PK.P(z, k)
-    elif dz == "ODE":
-        return d_K(z, i, j, "ODE", cosmo_pars)*PK.P(z, k)
-    elif dz == "w0":
-        return d_K(z, i, j, "w0", cosmo_pars)*PK.P(z, k)
-    elif dz == "wa":
-        return d_K(z, i, j, "wa", cosmo_pars)*PK.P(z, k)
-    elif dz == "h":
-        return d_K(z, i, j, "h", cosmo_pars)*PK.P(z, k)
+def convergence_param(i, j, l, param, dx=0.01, cosmpar=dict_MPS, zmin=0.001, zmax=2.5):
+    l_speed = const.c.value / 1000
+    dict_low, dict_up = cosmpar.copy(), cosmpar.copy()
+    dict_low[param] = (1 - dx) * dict_low[param]
+    dict_up[param] = (1 + dx) * dict_up[param]
+    H0_l = dict_low['hubble'] * 100
+    H0_u = dict_up['hubble'] * 100
+    def integrand(z, dict=None , var=''):
+        term1 = Weight_F(i, z, dict) * Weight_F(j, z, dict) / \
+            (E(z, dict) * r(z, dict) ** 2)
+        k = (l + 1/2) / r(z, dict)
+        term2 = dict_mps_interpolation['mps_'+param+var](z, k)[0]
+        return term1 * term2
+    integral_l = integrate.quad(integrand, zmin, zmax, (dict_low, '_l'))[0]
+    integral_u = integrate.quad(integrand, zmin, zmax, (dict_up, '_u'))[0]
+    return [l_speed / H0_l * integral_l, l_speed / H0_u * integral_u]
 
-
-def int_2_C(z, l, i, j, dz=str(), cosmo_pars=dict()):
-    k = (l + 1/2) / r(z)
-    if dz == "Om":
-        return K_yy(z, i, j)*d_MPS(z, l, "Om")
-    elif dz == "ODE":
-        return K_yy(z, i, j)*d_MPS(z, l, "ODE")
-    elif dz == "w0":
-        return K_yy(z, i, j)*d_MPS(z, l, "w0")
-    elif dz == "wa":
-        return K_yy(z, i, j)*d_MPS(z, l, "wa")
-    elif dz == "h":
-        return K_yy(z, i, j)*d_MPS(z, l, "h")
-
-
-def d_C(l, i, j, dz=str(), cosmo_pars=dict()):
-    z_int = np.linspace(limits[0], limits[1], 200)
-    if dz == "Om":
-        I1 = np.trapz(int_1_C(z_int, l, i, j, "Om", cosmo_pars), z_int)
-        I2 = np.trapz(int_2_C(z_int, l, i, j, "Om", cosmo_pars), z_int)
-        return I1 * I2
-    elif dz == "ODE":
-        I1 = np.trapz(int_1_C(z_int, l, i, j, "ODE", cosmo_pars), z_int)
-        I2 = np.trapz(int_2_C(z_int, l, i, j, "ODE", cosmo_pars), z_int)
-        return I1 * I2
-    elif dz == "w0":
-        I1 = np.trapz(int_1_C(z_int, l, i, j, "w0", cosmo_pars), z_int)
-        I2 = np.trapz(int_2_C(z_int, l, i, j, "w0", cosmo_pars), z_int)
-        return I1 * I2
-    elif dz == "wa":
-        I1 = np.trapz(int_1_C(z_int, l, i, j, "wa", cosmo_pars), z_int)
-        I2 = np.trapz(int_2_C(z_int, l, i, j, "wa", cosmo_pars), z_int)
-        return I1 * I2
-    elif dz == "h":
-        I1 = np.trapz(int_1_C(z_int, l, i, j, "h", cosmo_pars), z_int)
-        I2 = np.trapz(int_2_C(z_int, l, i, j, "h", cosmo_pars), z_int)
-        return I1 * I2
-
-
-
-
-
-
-# EXTRA Compact Notation with Kernel functions
-
-
-def K_Iy(z, i, j, cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value / 1000
-    cte = (H0/c)**3
-    term_1 = ((3/2)*Om*(1*z))
-    term_2 = ((n_i(z, i)*Weight_F(z, j, cosmo_pars)) + (n_i(z, j)*Weight_F(z, i, cosmo_pars)))/tilde_r(z, cosmo_pars)
-    return term_1*cte*term_2
-
-
-def K_II(z, i, j, cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value / 1000
-    cte = (H0/c)**3
-    term_1 = (n_i(z, i)*n_i(z, j)*E(z, cosmo_pars))/(tilde_r(z, cosmo_pars)**2)
-    return term_1*cte
-
-
-def P_DI(z, k, cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    A_ia = 1.72
-    C_ia = 0.0134
-    cte = -A_ia*C_ia*Om
-    term_1 = 1/D(z, cosmo_pars)
-    return cte*term_1*PK.P(z, k)
-
-
-def P_II(z, k, cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    A_ia = 1.72
-    C_ia = 0.0134
-    cte = -A_ia*C_ia*Om
-    term_1 = 1/D(z, cosmo_pars)
-    return ((cte*term_1)**2)*PK.P(z, k)
-
-
-def int_3(z, i, j, l, cosmo_pars=dict()):
-    k = (l + (1/2))/r(z, cosmo_pars)
-    I1 = K_yy(z, i, j, cosmo_pars)*PK.P(z, k)
-    I2 = K_Iy(z, i, j, cosmo_pars)*P_DI(z, k)
-    I3 = K_II(z, i, j, cosmo_pars)*P_II(z, k)
-    return I1 + I2 + I3
