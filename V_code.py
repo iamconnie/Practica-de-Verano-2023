@@ -938,3 +938,17 @@ def convergence_param(i, j, l, param, dx=0.01, cosmpar=dict_MPS, zmin=0.001, zma
     integral_u = integrate.quad(integrand, zmin, zmax, (dict_up, '_u'))[0]
     return [l_speed / H0_l * integral_l, l_speed / H0_u * integral_u]
 
+
+# For Omegab
+cosmic_shear_Omegab = np.zeros((len(ls_eval), 10, 10))
+dx=0.01
+
+for idx, ell in enumerate(ls_eval):
+    for i in range(10):
+        for j in range(10):
+            aux = convergence_param(i, j, ell, 'hubble', dx=dx)
+            cosmic_shear_Omegab[idx, i, j] = (aux[1] - aux[0]) / (2 * dx)
+            print('ell: %f'% (ell), end= '\r')
+ell: 21.748556
+reshape_cosmic = np.reshape(cosmic_shear_Omegab, (cosmic_shear_Omegab.shape[0], -1))
+np.savetxt('convergence/cosmic_shear_hubble', reshape_cosmic)
