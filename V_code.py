@@ -635,6 +635,8 @@ def Obs_E(l):
     return np.sqrt(2/((2*l + 1)*Delta_l(i)*f_sky))*C_l_i_j[l]
 
 
+
+
 dict_MPS = dict()
 
 dict_MPS['Omegam'] = 0.32
@@ -929,7 +931,7 @@ def convergence_param(i, j, l, param, dx=0.01, cosmpar=dict_MPS, zmin=0.001, zma
     H0_l = dict_low['hubble'] * 100
     H0_u = dict_up['hubble'] * 100
     def integrand(z, dict=None , var=''):
-        term1 = Weight_F(i, z, dict) * Weight_F(j, z, dict) / \
+        term1 = Weight_F(z, i, dict) * Weight_F(z, i, dict) / \
             (E(z, dict) * r(z, dict) ** 2)
         k = (l + 1/2) / r(z, dict)
         term2 = dict_mps_interpolation['mps_'+param+var](z, k)[0]
@@ -940,15 +942,15 @@ def convergence_param(i, j, l, param, dx=0.01, cosmpar=dict_MPS, zmin=0.001, zma
 
 
 # For Omegab
-cosmic_shear_Omegab = np.zeros((len(ls_eval), 10, 10))
+cosmic_shear_wa = np.zeros((len(ls_eval), 10, 10))
 dx=0.01
 
 for idx, ell in enumerate(ls_eval):
     for i in range(10):
         for j in range(10):
-            aux = convergence_param(i, j, ell, 'hubble', dx=dx)
-            cosmic_shear_Omegab[idx, i, j] = (aux[1] - aux[0]) / (2 * dx)
+            aux = convergence_param(i, j, ell, 'wa', dx=dx)
+            cosmic_shear_wa[idx, i, j] = (aux[1] - aux[0]) / (2 * dx)
             print('ell: %f'% (ell), end= '\r')
 ell: 21.748556
-reshape_cosmic = np.reshape(cosmic_shear_Omegab, (cosmic_shear_Omegab.shape[0], -1))
-np.savetxt('convergence/cosmic_shear_hubble', reshape_cosmic)
+reshape_cosmic = np.reshape(cosmic_shear_wa, (cosmic_shear_wa.shape[0], -1))
+np.savetxt('Convergence/cosmic_shear_wa', reshape_cosmic)
