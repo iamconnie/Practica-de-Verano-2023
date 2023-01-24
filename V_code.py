@@ -895,9 +895,7 @@ def mps_param(param, dx=0.01):
             np.savetxt('mps_data/wa_'+rslt, dict_mps_data[rslt])
 
 
-mps_param("w0")
-mps_param("wa")
-mps_param('Omegab')
+
 
 dict_mps_w0 = {'kh_l': None, 'kh_u': None, 'z_l': None, 'z_u': None, 'pk_l': None, 'pk_u': None}
 dict_mps_wa = {'kh_l': None, 'kh_u': None, 'z_l': None, 'z_u': None, 'pk_l': None, 'pk_u': None} 
@@ -942,6 +940,7 @@ def convergence_param(i, j, l, param, dx=0.01, cosmpar=dict_MPS, zmin=0.001, zma
 
 
 # For Omegab
+<<<<<<< HEAD
 cosmic_shear_Omegab = np.zeros((len(ls_eval), 10, 10))
 dx=0.01
 
@@ -954,3 +953,42 @@ for idx, ell in enumerate(ls_eval):
 ell: 21.748556
 reshape_cosmic = np.reshape(cosmic_shear_Omegab, (cosmic_shear_Omegab.shape[0], -1))
 np.savetxt('Convergence/cosmic_shear_Omegab', reshape_cosmic)
+=======
+# cosmic_shear_wa = np.zeros((len(ls_eval), 10, 10))
+# dx=0.01
+
+# for idx, ell in enumerate(ls_eval):
+#     for i in range(10):
+#         for j in range(10):
+#             aux = convergence_param(i, j, ell, 'wa', dx=dx)
+#             cosmic_shear_wa[idx, i, j] = (aux[1] - aux[0]) / (2 * dx)
+#             print('ell: %f'% (ell), end= '\r')
+# ell: 21.748556
+# reshape_cosmic = np.reshape(cosmic_shear_wa, (cosmic_shear_wa.shape[0], -1))
+# np.savetxt('Convergence/cosmic_shear_wa', reshape_cosmic)
+
+def d_MPS(z, l, dz=str(),cosmo_pars=dict()):
+    k = (l + 1/2) / r(z)
+    dx=0.01
+    if dz == "Om":
+        term_l = dict_mps_interpolation['mps_Omegam_l'](z, k)[0]
+        term_u = dict_mps_interpolation['mps_Omegam_u'](z, k)[0]
+        return (term_l - term_u) / (2*dx)
+    elif dz == "ODE":
+        term_l = dict_mps_interpolation['mps_ODE_l'](z, k)[0]
+        term_u = dict_mps_interpolation['mps_ODE_u'](z, k)[0]
+        return (term_l - term_u) / (2*dx)
+    elif dz == "w0":
+        term_l = dict_mps_interpolation['mps_w0_l'](z, k)[0]
+        term_u = dict_mps_interpolation['mps_w0_u'](z, k)[0]
+        return (term_l - term_u) / (2*dx)
+    elif dz == "wa":
+        term_l = dict_mps_interpolation['mps_wa_l'](z, k)[0]
+        term_u = dict_mps_interpolation['mps_wa_u'](z, k)[0]
+        return (term_l - term_u) / (2*dx)
+    elif dz == "h":
+        term_l = dict_mps_interpolation['mps_h_l'](z, k)[0]
+        term_u = dict_mps_interpolation['mps_h_u'](z, k)[0]
+        return (term_l - term_u) / (2*dx)
+
+>>>>>>> beea49e2886f5f150db847a23eea0687dc264fa1
