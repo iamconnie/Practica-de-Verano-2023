@@ -920,7 +920,7 @@ mps_Omegab_u = interpolate.RectBivariateSpline(dict_mps_omegab['z_u'], dict_mps_
 
 dict_mps_interpolation = {'mps_wa_l': mps_wa_l, 'mps_wa_u': mps_wa_u,
                           'mps_Omegab_l': mps_Omegab_l, 'mps_Omegab_u': mps_Omegab_u,
-                          'mps_w0_l': mps_w0_l, 'mps_Omegab_u': mps_w0_u}
+                          'mps_w0_l': mps_w0_l, 'mps_w0_u': mps_w0_u}
 
 
 def convergence_param(i, j, l, param, dx=0.01, cosmpar=dict_MPS, zmin=0.001, zmax=2.5):
@@ -931,7 +931,7 @@ def convergence_param(i, j, l, param, dx=0.01, cosmpar=dict_MPS, zmin=0.001, zma
     H0_l = dict_low['hubble'] * 100
     H0_u = dict_up['hubble'] * 100
     def integrand(z, dict=None , var=''):
-        term1 = Weight_F(z, i, dict) * Weight_F(z, i, dict) / \
+        term1 = Weight_F(z, i, dict) * Weight_F(z, j, dict) / \
             (E(z, dict) * r(z, dict) ** 2)
         k = (l + 1/2) / r(z, dict)
         term2 = dict_mps_interpolation['mps_'+param+var](z, k)[0]
@@ -942,15 +942,15 @@ def convergence_param(i, j, l, param, dx=0.01, cosmpar=dict_MPS, zmin=0.001, zma
 
 
 # For Omegab
-cosmic_shear_wa = np.zeros((len(ls_eval), 10, 10))
+cosmic_shear_Omegab = np.zeros((len(ls_eval), 10, 10))
 dx=0.01
 
 for idx, ell in enumerate(ls_eval):
     for i in range(10):
         for j in range(10):
-            aux = convergence_param(i, j, ell, 'wa', dx=dx)
-            cosmic_shear_wa[idx, i, j] = (aux[1] - aux[0]) / (2 * dx)
-            print('ell: %f'% (ell), end= '\r')
+            aux = convergence_param(i, j, ell, 'Omegab', dx=dx)
+            cosmic_shear_Omegab[idx, i, j] = (aux[1] - aux[0]) / (2 * dx)
+            print('idx: %f'% (idx), end= '\r')
 ell: 21.748556
-reshape_cosmic = np.reshape(cosmic_shear_wa, (cosmic_shear_wa.shape[0], -1))
-np.savetxt('Convergence/cosmic_shear_wa', reshape_cosmic)
+reshape_cosmic = np.reshape(cosmic_shear_Omegab, (cosmic_shear_Omegab.shape[0], -1))
+np.savetxt('Convergence/cosmic_shear_Omegab', reshape_cosmic)
