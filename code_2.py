@@ -614,12 +614,12 @@ def Delta_l(i):
 
 
 def Cov(i, j, m, n):
-    f_sky = 1/15000
+    f_sky = 0.36361
     M = np.zeros((100, 100))
-    for x, l in enumerate(np.arange(100, 200)):
+    for x, l in enumerate(ls_eval):
         dl = l_bins[x][1] - l_bins[x][0]
-        term_1 = C_l_i_j[l-100, i, m]* C_l_i_j[l-100, j, n]
-        term_2 = C_l_i_j[l-100, i, n]* C_l_i_j[l-100, j, m]
+        term_1 = C_l_i_j[x, i, m] * C_l_i_j[x, j, n]
+        term_2 = C_l_i_j[x, i, n] * C_l_i_j[x, j, m]
         term_3 = (2*l + 1)*f_sky*dl
         M[x, x] = (term_1 + term_2) / term_3
     return M
@@ -662,7 +662,7 @@ im = ax.imshow(Cov(i, j, m, n))
 ax.set_title('Cov$[C_{%i%i}^{\gamma\gamma}(\ell), C_{%i%i}^{\gamma\gamma}(\ell)]$'%(i,j,m,n))
 ax.set_ylim(ax.get_ylim()[::-1])
 fig.colorbar(im)
-# fig.show()
+fig.show()
 
 fig, ax = plt.subplots()
 
@@ -700,6 +700,8 @@ for idx, l in enumerate(ls_eval):
     ax.scatter(l, C_l_i_j[idx, i, j], c='mediumpurple', s=0.5)
 ax.set_xlabel('Multipole $\ell$')
 ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma}(\ell)$'%(str(i),str(j)))
+fig.show()
+
 # # DERIVATES
 
 
@@ -1192,9 +1194,9 @@ def f_e_sum1(a, b, dict=dict()):
     return sum
 
 F_a_b = np.array([[f_c("Omegam", "Omegam", dict_d_C), f_c("Omegam", "hubble", dict_d_C),f_c("Omegam", "ns", dict_d_C), f_c("Omegam", "sigma8", dict_d_C)],
-                  f_c("hubble", "Omegam", dict_d_C),f_c("hubble", "hubble", dict_d_C),f_c("hubble", "ns", dict_d_C),f_c("hubble", "sigma8", dict_d_C)],
+                  [f_c("hubble", "Omegam", dict_d_C),f_c("hubble", "hubble", dict_d_C),f_c("hubble", "ns", dict_d_C),f_c("hubble", "sigma8", dict_d_C)],
                   [f_c("ns", "Omegam", dict_d_C),f_c("ns", "hubble", dict_d_C),f_c("ns", "ns", dict_d_C),f_c("ns", "sigma8", dict_d_C)],
-                  [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "hubble", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "sigma8", dict_d_C)])
+                  [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "hubble", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "sigma8", dict_d_C)]])
 C_a_b = np.linalg.inv(F_a_b)
 sigma_Om, sigma_s8, sigma_ns, sigma_h = np.sqrt(np.diag(C_a_b))
 
