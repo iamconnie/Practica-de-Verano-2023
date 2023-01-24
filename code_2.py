@@ -583,7 +583,7 @@ def C(l, i, j, cosmo_pars=dict()):
 
 # np.savetxt('quad_convergence/quad_file', reshape_cosmic)
 
-C_l_n = np.loadtxt('quad_convergence/quad_file.txt')
+C_l_n = np.loadtxt('Convergence/convergence_file.txt')
 
 C_l_i_j = np.reshape(C_l_n, (C_l_n.shape[0],
                              C_l_n.shape[1]
@@ -592,7 +592,7 @@ C_l_i_j = np.reshape(C_l_n, (C_l_n.shape[0],
 np.save('quad_convergence/quad_file', C)
 
 lst_C_l = dict()
-for l in range(200):
+for l in range(100):
     lst_C_l['C_bin_%s'%(str(l))] = C_l_n[l]
 
 
@@ -677,9 +677,9 @@ ltoplt = np.arange(100, 300)
 # ls = np.arange(100, 1501)
 
 
-for l in ltoplt:
-    lo = ax.scatter(l, l*(l+1)*C_l_i_j[l-100, 1, 1]/(2*np.pi), c='mediumpurple', s=2)
-    ll = ax.scatter(l, l*(l+1)*C_l_i_j[l-100, 9, 9]/(2*np.pi), c='darkturquoise', s=2)
+for idx, ell in enumerate(ls_eval):
+    lo = ax.scatter(l, l*(l+1)*C_l_i_j[idx, 1, 1]/(2*np.pi), c='mediumpurple', s=2)
+    ll = ax.scatter(l, l*(l+1)*C_l_i_j[idx, 9, 9]/(2*np.pi), c='darkturquoise', s=2)
 ax.set_xlim((100, 300))
 ax.set_xlabel('Multipole $\ell$')
 ax.set_ylabel("$C_{1,1}$ v.s $C_{9,9}$");
@@ -690,6 +690,16 @@ ax.legend((lo, ll),
            ncol=2,
            fontsize=10)
 # fig.show()
+
+fig, ax = plt.subplots()
+
+i, j = 9, 9
+
+for idx, l in enumerate(ls_eval):
+    ax.scatter(l, C_l_i_j[idx, i, j], c='mediumpurple', s=0.5)
+ax.set_xlabel('Multipole $\ell$')
+ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma}(\ell)$'%(str(i),str(j)))
+fig.show()
 # DERIVATES
 
 
@@ -1137,21 +1147,33 @@ def d_C(l, i, j, dz=str(), cosmo_pars=dict()):
         return integrate.quad(int_3_C, limits[0], limits[1], args=(l, i, j, "h"))[0]
 
 
-d_C_wa = np.zeros((len(ls_eval), 10, 10))
+# d_C_wa = np.zeros((len(ls_eval), 10, 10))
 
-for idx, ell in enumerate(ls_eval):
-    for i in range(10):
-        for j in range(10):
-            d_C_wa[idx, i, j] = d_C(ell, i, j, "wa")
-            print("i: %f, j: %f" %(i, j), end = '\r')
+# for idx, ell in enumerate(ls_eval):
+#     for i in range(10):
+#         for j in range(10):
+#             d_C_wa[idx, i, j] = d_C(ell, i, j, "wa")
+#             print("i: %f, j: %f" %(i, j), end = '\r')
 
-reshape_cosmic = np.reshape(d_C_wa, (d_C_wa.shape[0], -1))
-np.savetxt('D_C/cosmic_shear_wa', reshape_cosmic)
+# reshape_cosmic = np.reshape(d_C_wa, (d_C_wa.shape[0], -1))
+# np.savetxt('D_C/cosmic_shear_wa', reshape_cosmic)
+
+# FISHER MATRIX
+
+load_hubble = np.loadtxt('convergence/cosmic_shear_hubble.txt')
+cosmic_shear_hubble = np.reshape(load_hubble, (load_hubble.shape[0], load_hubble.shape[1] // 10, 10))
+load_ns = np.loadtxt('convergence/cosmic_shear_ns.txt')
+cosmic_shear_ns = np.reshape(load_ns, (load_ns.shape[0], load_ns.shape[1] // 10, 10))
+load_Omegam = np.loadtxt('convergence/cosmic_shear_omegam.txt')
+cosmic_shear_Omegam = np.reshape(load_Omegam, (load_Omegam.shape[0], load_Omegam.shape[1] // 10, 10))
+load_s8 = np.loadtxt('convergence/cosmic_shear_sigma8.txt')
+cosmic_shear_sigma8 = np.reshape(load_s8, (load_s8.shape[0], load_s8.shape[1] // 10, 10))
+
+dict_d_C = {'Omegam': cosmic_shear_Omegam, 'hubble': cosmic_shear_hubble, 'ns': cosmic_shear_ns, 'sigma8': cosmic_shear_sigma8}
+                        #'w0': cosmic_shear_w0, 'wa': cosmic_shear_wa}
 
 
-# FISHER MATRIX 
-
-def f_c_sum1(a, b, dict=dict()):
+def f_c(a, b, dict=dict()):
     sum = 0
     for i in range(10):
         for j in range(10):
@@ -1180,9 +1202,11 @@ def f_e_sum1(a, b, dict=dict()):
                     sum += term_1 @ term_2
     return sum
 
-# def f_c_sum2(l):
-#     sum = 0
-#     for l in ls_eval:
+F_a_b = np.array([[f_c("Omegam", "Omegam", dict_d_C),f_c("Omegam", "sigma8", dict_d_C),f_c("Omegam", "ns", dict_d_C),f_c("Omegam", "hubble", dict_d_C)],
+                  [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "sigma8", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "hubble", dict_d_C)],
+                  [f_c("ns", "Omegam", dict_d_C),f_c("ns", "sigma8", dict_d_C),f_c("ns", "ns", dict_d_C),f_c("ns", "hubble", dict_d_C)],
+                  [f_c("hubble", "Omegam", dict_d_C),f_c("hubble", "sigma8", dict_d_C),f_c("hubble", "ns", dict_d_C),f_c("hubble", "hubble", dict_d_C)]])
+C_a_b = np.linalg.inv(F_a_b)
 
 # EXTRA Compact Notation with Kernel functions
 
