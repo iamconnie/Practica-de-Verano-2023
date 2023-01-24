@@ -1194,7 +1194,7 @@ def f_e_sum1(a, b, dict=dict()):
 F_a_b = np.array([[f_c("Omegam", "Omegam", dict_d_C), f_c("Omegam", "hubble", dict_d_C),f_c("Omegam", "ns", dict_d_C), f_c("Omegam", "sigma8", dict_d_C)],
                   f_c("hubble", "Omegam", dict_d_C),f_c("hubble", "hubble", dict_d_C),f_c("hubble", "ns", dict_d_C),f_c("hubble", "sigma8", dict_d_C)],
                   [f_c("ns", "Omegam", dict_d_C),f_c("ns", "hubble", dict_d_C),f_c("ns", "ns", dict_d_C),f_c("ns", "sigma8", dict_d_C)],
-                  [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "hubble", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "sigma8", dict_d_C)]])
+                  [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "hubble", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "sigma8", dict_d_C)])
 C_a_b = np.linalg.inv(F_a_b)
 sigma_Om, sigma_s8, sigma_ns, sigma_h = np.sqrt(np.diag(C_a_b))
 
