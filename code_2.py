@@ -666,7 +666,7 @@ fig.colorbar(im)
 fig, ax = plt.subplots()
 
 ell = 100
-im = ax.imshow(Obs_E(ell))
+im = ax.imshow(Obs_E(i,j))
 ax.set_title('$\Delta C_{ij}^{\gamma\gamma}(\ell=%i)$'%ell)
 ax.set_ylim(ax.get_ylim()[::-1])
 fig.colorbar(im)
@@ -1137,16 +1137,16 @@ def d_C(l, i, j, dz=str(), cosmo_pars=dict()):
         return integrate.quad(int_3_C, limits[0], limits[1], args=(l, i, j, "h"))[0]
 
 
-# d_C_wa = np.zeros((len(ls_eval), 10, 10))
+d_C_wa = np.zeros((len(ls_eval), 10, 10))
 
-# for idx, ell in enumerate(ls_eval):
-#     for i in range(10):
-#         for j in range(10):
-#             d_C_wa[idx, i, j] = d_C(ell, i, j, "wa")
-#             print("i: %f, j: %f" %(i, j), end = '\r')
+for idx, ell in enumerate(ls_eval):
+    for i in range(10):
+        for j in range(10):
+            d_C_wa[idx, i, j] = d_C(ell, i, j, "wa")
+            print("i: %f, j: %f" %(i, j), end = '\r')
 
-# reshape_cosmic = np.reshape(d_C_wa, (d_C_wa.shape[0], -1))
-# np.savetxt('D_C/cosmic_shear_wa', reshape_cosmic)
+reshape_cosmic = np.reshape(d_C_wa, (d_C_wa.shape[0], -1))
+np.savetxt('D_C/cosmic_shear_wa', reshape_cosmic)
 
 
 # FISHER MATRIX 
@@ -1180,51 +1180,51 @@ def f_e_sum1(a, b, dict=dict()):
                     sum += term_1 @ term_2
     return sum
 
-def f_c_sum2(l):
-    sum = 0
-    for l in ls_eval:
-        
+# def f_c_sum2(l):
+#     sum = 0
+#     for l in ls_eval:
+
 # EXTRA Compact Notation with Kernel functions
 
 
-def K_Iy(z, i, j, cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value / 1000
-    cte = (H0/c)**3
-    term_1 = ((3/2)*Om*(1*z))
-    term_2 = ((n_i(z, i)*Weight_F(z, j, cosmo_pars)) + (n_i(z, j)*Weight_F(z, i, cosmo_pars)))/tilde_r(z, cosmo_pars)
-    return term_1*cte*term_2
+# def K_Iy(z, i, j, cosmo_pars=dict()):
+#     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+#     c = const.c.value / 1000
+#     cte = (H0/c)**3
+#     term_1 = ((3/2)*Om*(1*z))
+#     term_2 = ((n_i(z, i)*Weight_F(z, j, cosmo_pars)) + (n_i(z, j)*Weight_F(z, i, cosmo_pars)))/tilde_r(z, cosmo_pars)
+#     return term_1*cte*term_2
 
 
-def K_II(z, i, j, cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    c = const.c.value / 1000
-    cte = (H0/c)**3
-    term_1 = (n_i(z, i)*n_i(z, j)*E(z, cosmo_pars))/(tilde_r(z, cosmo_pars)**2)
-    return term_1*cte
+# def K_II(z, i, j, cosmo_pars=dict()):
+#     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+#     c = const.c.value / 1000
+#     cte = (H0/c)**3
+#     term_1 = (n_i(z, i)*n_i(z, j)*E(z, cosmo_pars))/(tilde_r(z, cosmo_pars)**2)
+#     return term_1*cte
 
 
-def P_DI(z, k, cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    A_ia = 1.72
-    C_ia = 0.0134
-    cte = -A_ia*C_ia*Om
-    term_1 = 1/D(z, cosmo_pars)
-    return cte*term_1*PK.P(z, k)
+# def P_DI(z, k, cosmo_pars=dict()):
+#     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+#     A_ia = 1.72
+#     C_ia = 0.0134
+#     cte = -A_ia*C_ia*Om
+#     term_1 = 1/D(z, cosmo_pars)
+#     return cte*term_1*PK.P(z, k)
 
 
-def P_II(z, k, cosmo_pars=dict()):
-    H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
-    A_ia = 1.72
-    C_ia = 0.0134
-    cte = -A_ia*C_ia*Om
-    term_1 = 1/D(z, cosmo_pars)
-    return ((cte*term_1)**2)*PK.P(z, k)
+# def P_II(z, k, cosmo_pars=dict()):
+#     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
+#     A_ia = 1.72
+#     C_ia = 0.0134
+#     cte = -A_ia*C_ia*Om
+#     term_1 = 1/D(z, cosmo_pars)
+#     return ((cte*term_1)**2)*PK.P(z, k)
 
 
-def int_3(z, i, j, l, cosmo_pars=dict()):
-    k = (l + (1/2))/r(z, cosmo_pars)
-    I1 = K_yy(z, i, j, cosmo_pars)*PK.P(z, k)
-    I2 = K_Iy(z, i, j, cosmo_pars)*P_DI(z, k)
-    I3 = K_II(z, i, j, cosmo_pars)*P_II(z, k)
-    return I1 + I2 + I3
+# def int_3(z, i, j, l, cosmo_pars=dict()):
+#     k = (l + (1/2))/r(z, cosmo_pars)
+#     I1 = K_yy(z, i, j, cosmo_pars)*PK.P(z, k)
+#     I2 = K_Iy(z, i, j, cosmo_pars)*P_DI(z, k)
+#     I3 = K_II(z, i, j, cosmo_pars)*P_II(z, k)
+#     return I1 + I2 + I3
