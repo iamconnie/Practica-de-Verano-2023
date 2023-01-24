@@ -615,14 +615,15 @@ def Delta_l(i):
 
 def Cov(i, j, m, n):
     f_sky = 1/15000
-    #delta_l = l_lst[-1] - l_lst[0]
     M = np.zeros((100, 100))
     for x, l in enumerate(np.arange(100, 200)):
+        dl = l_bins[x][1] - l_bins[x][0]
         term_1 = C_l_i_j[l-100, i, m]* C_l_i_j[l-100, j, n]
         term_2 = C_l_i_j[l-100, i, n]* C_l_i_j[l-100, j, m]
-        term_3 = (2*l + 1)*f_sky*Delta_l(i)
+        term_3 = (2*l + 1)*f_sky*dl
         M[x, x] = (term_1 + term_2) / term_3
     return M
+
 
 
 def Obs_E(i, j):
@@ -699,8 +700,7 @@ for idx, l in enumerate(ls_eval):
     ax.scatter(l, C_l_i_j[idx, i, j], c='mediumpurple', s=0.5)
 ax.set_xlabel('Multipole $\ell$')
 ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma}(\ell)$'%(str(i),str(j)))
-fig.show()
-# DERIVATES
+# # DERIVATES
 
 
 def d_ln_E(z, dz=str(), cosmo_pars=dict()):
@@ -847,14 +847,6 @@ def d_K(z, i, j, dz=str(), cosmo_pars=dict()):
         return term_1*d_ln_K(z, i, j, "h", cosmo_pars)
 
 
-# d_K_Om = []
-# for z in z_list:
-#     for i in range(10):
-#         for j in range(10):
-#             d_K_Om.append([z, d_K(z, i, j, "Om")])
-
-# np.savetxt('derivate_K_Om.txt', np.array(d_K))
-
 def d_kl(z, l, dz=str(), cosmo_pars=dict()):
     if dz == "Om":
         return (-d_ln_tilder(z, "Om", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
@@ -875,6 +867,7 @@ def d_k_MPS(z, l):
 
 # parametros con error asociado para obtener pendeinte de MPS
 
+
 dict_MPS = dict()
 
 dict_MPS['Omegam'] = 0.32
@@ -887,7 +880,6 @@ dict_MPS['hubble'] = 0.67
 dict_MPS['ns'] = 0.96
 dict_MPS['sigma8'] = 0.815584
 dict_MPS['gamma'] = 0.55
-
 
 
 def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
@@ -924,26 +916,26 @@ def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
         zs_l = zs_l[1:-1]
         zs_u = zs_u[1:-1]
         PK_l = camb.get_matter_power_interpolator(pars_l,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
+                                                  nonlinear=True,
+                                                  hubble_units=False,
+                                                  k_hunit=True,
+                                                  kmax=kmax,
+                                                  var1=model.Transfer_tot,
+                                                  var2=model.Transfer_tot,
+                                                  zmax=zs[-1])
         PK_u = camb.get_matter_power_interpolator(pars_u,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
-        
+                                                  nonlinear=True,
+                                                  hubble_units=False,
+                                                  k_hunit=True,
+                                                  kmax=kmax,
+                                                  var1=model.Transfer_tot,
+                                                  var2=model.Transfer_tot,
+                                                  zmax=zs[-1])
+    
         return (PK_u.P(z, k) - PK_l.P(z, k)) / 2*dx
     elif dz == "ODE":
         return 0
-    
+
     elif dz == "w0":
         w0_l, w0_u = (1 - dx) * dict_MPS['w0'], (1 + dx) * dict_MPS['w0']
         pars_l.set_dark_energy(w=w0_l, wa=dict_MPS['wa'], dark_energy_model='fluid')
@@ -965,23 +957,23 @@ def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
         zs_l = zs_l[1:-1]
         zs_u = zs_u[1:-1]
         PK_l = camb.get_matter_power_interpolator(pars_l,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
+                                                  nonlinear=True,
+                                                  hubble_units=False,
+                                                  k_hunit=True,
+                                                  kmax=kmax,
+                                                  var1=model.Transfer_tot,
+                                                  var2=model.Transfer_tot,
+                                                  zmax=zs[-1])
         PK_u = camb.get_matter_power_interpolator(pars_u,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
+                                                  nonlinear= True,
+                                                  hubble_units=False,
+                                                  k_hunit=True,
+                                                  kmax=kmax,
+                                                  var1=model.Transfer_tot,
+                                                  var2=model.Transfer_tot,
+                                                  zmax=zs[-1])
         return (PK_u.P(z, k) - PK_l.P(z, k)) / 2*dx
-    
+
     elif dz == "wa":
         wa_l, wa_u = (1 - dx) * dict_MPS['wa'], (1 + dx) * dict_MPS['wa']
         pars_l.set_dark_energy(w=dict_MPS['w0'], wa=wa_l, dark_energy_model='fluid')
@@ -1003,23 +995,23 @@ def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
         zs_l = zs_l[1:-1]
         zs_u = zs_u[1:-1]
         PK_l = camb.get_matter_power_interpolator(pars_l,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
+                                                  nonlinear=True,
+                                                  hubble_units=False,
+                                                  k_hunit=True,
+                                                  kmax=kmax,
+                                                  var1=model.Transfer_tot,
+                                                  var2=model.Transfer_tot,
+                                                  zmax=zs[-1])
         PK_u = camb.get_matter_power_interpolator(pars_u,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
+                                                  nonlinear=True,
+                                                  hubble_units=False,
+                                                  k_hunit=True,
+                                                  kmax=kmax,
+                                                  var1=model.Transfer_tot,
+                                                  var2=model.Transfer_tot,
+                                                  zmax=zs[-1])
         return (PK_u.P(z, k) - PK_l.P(z, k)) / 2*dx
-        
+
     elif dz == "h":
         hubble_l, hubble_u = (1 - dx) * dict_MPS['hubble'], (1 + dx) * dict_MPS['hubble']
 
@@ -1044,25 +1036,22 @@ def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
         zs_l = zs_l[1:-1]
         zs_u = zs_u[1:-1]
         PK_l = camb.get_matter_power_interpolator(pars_l,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
+                                                  nonlinear=True,
+                                                  hubble_units=False,
+                                                  k_hunit=True,
+                                                  kmax=kmax,
+                                                  var1=model.Transfer_tot,
+                                                  var2=model.Transfer_tot,
+                                                  zmax=zs[-1])
         PK_u = camb.get_matter_power_interpolator(pars_u,
-                                        nonlinear=True,
-                                        hubble_units=False,
-                                        k_hunit=True,
-                                        kmax=kmax,
-                                        var1=model.Transfer_tot,
-                                        var2=model.Transfer_tot,
-                                        zmax=zs[-1])
+                                                  nonlinear=True,
+                                                  hubble_units=False,
+                                                  k_hunit=True,
+                                                  kmax=kmax,
+                                                  var1=model.Transfer_tot,
+                                                  var2=model.Transfer_tot,
+                                                  zmax=zs[-1])
         return (PK_u.P(z, k) - PK_l.P(z, k)) / 2*dx
-
-
-
 
 
 def d_MPS(z, l, dz=str(), cosmo_pars=dict()):
@@ -1179,8 +1168,8 @@ def f_c(a, b, dict=dict()):
         for j in range(10):
             for m in range(10):
                 for n in range(10):
-                    d_C_a = dict[a][:,i,j]
-                    d_C_b = dict[b][:,m,n]
+                    d_C_a = dict[a][:, i, j]
+                    d_C_b = dict[b][:, m, n]
                     cov_inv = np.linalg.inv(Cov(i, j, m, n))
                     term_1 = np.dot(cov_inv, d_C_b)
                     sum += np.dot(d_C_a, term_1)
@@ -1202,11 +1191,12 @@ def f_e_sum1(a, b, dict=dict()):
                     sum += term_1 @ term_2
     return sum
 
-F_a_b = np.array([[f_c("Omegam", "Omegam", dict_d_C),f_c("Omegam", "sigma8", dict_d_C),f_c("Omegam", "ns", dict_d_C),f_c("Omegam", "hubble", dict_d_C)],
-                  [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "sigma8", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "hubble", dict_d_C)],
-                  [f_c("ns", "Omegam", dict_d_C),f_c("ns", "sigma8", dict_d_C),f_c("ns", "ns", dict_d_C),f_c("ns", "hubble", dict_d_C)],
-                  [f_c("hubble", "Omegam", dict_d_C),f_c("hubble", "sigma8", dict_d_C),f_c("hubble", "ns", dict_d_C),f_c("hubble", "hubble", dict_d_C)]])
+F_a_b = np.array([[f_c("Omegam", "Omegam", dict_d_C), f_c("Omegam", "hubble", dict_d_C),,f_c("Omegam", "ns", dict_d_C), f_c("Omegam", "sigma8", dict_d_C)],
+                  f_c("hubble", "Omegam", dict_d_C),f_c("hubble", "hubble", dict_d_C),f_c("hubble", "ns", dict_d_C),f_c("hubble", "sigma8", dict_d_C)],
+                  [f_c("ns", "Omegam", dict_d_C),f_c("ns", "hubble", dict_d_C),f_c("ns", "ns", dict_d_C),f_c("ns", "sigma8", dict_d_C)],
+                  [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "hubble", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "sigma8", dict_d_C)]])
 C_a_b = np.linalg.inv(F_a_b)
+sigma_Om, sigma_s8, sigma_ns, sigma_h = np.sqrt(np.diag(C_a_b))
 
 # EXTRA Compact Notation with Kernel functions
 
