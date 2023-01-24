@@ -12,6 +12,7 @@ from camb import model
 import pandas as pd
 from astropy import constants as const
 import scipy.interpolate as interpolate
+from scipy.stats import linregress
 
 
 # instalacion de camb
@@ -344,7 +345,7 @@ list_of_PMS = list(zip(kh, z, pk, kh_nonlin, z_nonlin, pk_nonlin))
 
 # Storage number density
 
-# z_list = z_bin[1]
+z_list = z_bin[1]
 
 # lst_0 = []
 # for z in z_list:
@@ -593,11 +594,6 @@ np.save('quad_convergence/quad_file', C)
 lst_C_l = dict()
 for l in range(200):
     lst_C_l['C_bin_%s'%(str(l))] = C_l_n[l]
-    # for i in range(10):
-    #     lst_C_l['C_bin_{%%}']
-    #     for j in range(10):
-
-
 
 
 # FIHSER MATRIX
@@ -629,10 +625,13 @@ def Cov(i, j, m, n):
     return M
 
 
-def Obs_E(l):
+def Obs_E(i, j):
     f_sky = 1/15000
     # delta_l = l_lst[-1] - l_lst[0]
-    return np.sqrt(2/((2*l + 1)*Delta_l(i)*f_sky))*C_l_i_j[l]
+    M = np.zeros((100, 100))
+    for x, l in enumerate(np.arange(100, 200)):
+        M[x, x] = np.sqrt(2/((2*l + 1)*Delta_l(i)*f_sky))*C_l_i_j[l - 100, i, j]
+    return M 
 
 
 def K_yy(z, i, j, cosmo_pars=dict()):
@@ -662,7 +661,7 @@ im = ax.imshow(Cov(i, j, m, n))
 ax.set_title('Cov$[C_{%i%i}^{\gamma\gamma}(\ell), C_{%i%i}^{\gamma\gamma}(\ell)]$'%(i,j,m,n))
 ax.set_ylim(ax.get_ylim()[::-1])
 fig.colorbar(im)
-fig.show()
+# fig.show()
 
 fig, ax = plt.subplots()
 
@@ -671,7 +670,7 @@ im = ax.imshow(Obs_E(ell))
 ax.set_title('$\Delta C_{ij}^{\gamma\gamma}(\ell=%i)$'%ell)
 ax.set_ylim(ax.get_ylim()[::-1])
 fig.colorbar(im)
-fig.show()
+# fig.show()
 
 fig, ax = plt.subplots()
 ltoplt = np.arange(100, 300)
@@ -690,7 +689,7 @@ ax.legend((lo, ll),
            loc='center right',
            ncol=2,
            fontsize=10)
-fig.show()
+# fig.show()
 # DERIVATES
 
 
@@ -739,13 +738,13 @@ def d_ln_tilder(z, dz=str(), cosmo_pars=dict()):
 
     z_int = np.linspace(0, z, 200)
     if dz == "Om":
-        return 1/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"Om",cosmo_pars), z_int)
+        return 1/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int, "Om",cosmo_pars), z_int)
     elif dz == "ODE":
-        return 1/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"ODE",cosmo_pars), z_int)
+        return 1/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int, "ODE",cosmo_pars), z_int)
     elif dz == "w0":
-        return 3/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"w0",cosmo_pars), z_int)
+        return 3/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int, "w0",cosmo_pars), z_int)
     elif dz == "wa":
-        return 3/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int,"wa",cosmo_pars), z_int)
+        return 3/2*tilde_r(z, cosmo_pars)*np.trapz(int_d_ln_tilder(z_int, "wa",cosmo_pars), z_int)
     elif dz == "h":
         return -1/(H0/100)
     else:
@@ -838,6 +837,14 @@ def d_K(z, i, j, dz=str(), cosmo_pars=dict()):
         return term_1*d_ln_K(z, i, j, "h", cosmo_pars)
 
 
+# d_K_Om = []
+# for z in z_list:
+#     for i in range(10):
+#         for j in range(10):
+#             d_K_Om.append([z, d_K(z, i, j, "Om")])
+
+# np.savetxt('derivate_K_Om.txt', np.array(d_K))
+
 def d_kl(z, l, dz=str(), cosmo_pars=dict()):
     if dz == "Om":
         return (-d_ln_tilder(z, "Om", cosmo_pars)*(l + 1/2))/r(z, cosmo_pars)
@@ -875,20 +882,11 @@ dict_MPS['gamma'] = 0.55
 
 def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
     dx = 0.01
-    nz = 100  
+    k = (l + 1/2) / r(z)
+    nz = 100
     kmax = 7 
     pars_l = camb.CAMBparams()
     pars_u = camb.CAMBparams()
-    lst_Om_l = []
-    lst_Om_u = []
-    lst_ODE_l = []
-    lst_ODE_u = []
-    lst_w0_l = []
-    lst_w0_u = []
-    lst_wa_l = []
-    lst_wa_u = []
-    lst_h_l = []
-    lst_h_u = []
     if dz == "Om":
         Omegab_l, Omegab_u = (1 - dx) * dict_MPS['Omegab'], (1 + dx) * dict_MPS['Omegab']
         Omegach2_l, Omegach2_u = (1 - dx) * dict_MPS['Omegach2'], (1 + dx) * dict_MPS['Omegach2']
@@ -932,11 +930,7 @@ def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
                                         var2=model.Transfer_tot,
                                         zmax=zs[-1])
         
-        for l in ls_eval:
-            k = (l + 1/2) / r(z)
-            lst_Om_l.append(PK_l.P(z , k))
-            lst_Om_u.append(PK_u.P(z , k))
-            return np.polyfit(lst_Om_l, lst_Om_u, 1)[0]
+        return (PK_u.P(z, k) - PK_l.P(z, k)) / 2*dx
     elif dz == "ODE":
         return 0
     
@@ -976,11 +970,7 @@ def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
                                         var1=model.Transfer_tot,
                                         var2=model.Transfer_tot,
                                         zmax=zs[-1])
-        for l in ls_eval:
-            k = (l + 1/2) / r(z)
-            lst_w0_l.append(PK_l.P(z, k))
-            lst_w0_u.append(PK_u.P(z, k))
-            return np.polyfit(lst_w0_l, lst_w0_u, 1)[0]
+        return (PK_u.P(z, k) - PK_l.P(z, k)) / 2*dx
     
     elif dz == "wa":
         wa_l, wa_u = (1 - dx) * dict_MPS['wa'], (1 + dx) * dict_MPS['wa']
@@ -1018,11 +1008,7 @@ def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
                                         var1=model.Transfer_tot,
                                         var2=model.Transfer_tot,
                                         zmax=zs[-1])
-        for l in ls_eval:
-            k = (l + 1/2) / r(z)
-            lst_wa_l.append(PK_l.P(z , k))
-            lst_wa_u.append(PK_u.P(z , k))
-            return np.polyfit(lst_wa_l, lst_wa_u, 1)[0]
+        return (PK_u.P(z, k) - PK_l.P(z, k)) / 2*dx
         
     elif dz == "h":
         hubble_l, hubble_u = (1 - dx) * dict_MPS['hubble'], (1 + dx) * dict_MPS['hubble']
@@ -1030,9 +1016,9 @@ def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
         pars_l.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
         pars_u.set_dark_energy(w=-1.0, wa=0, dark_energy_model='fluid')
         pars_l.set_cosmology(H0=hubble_l*100, ombh2=dict_MPS['Omegab'] *
-                             hubble_l**2, omch2=dict_MPS['Omegac']*hubble_l**2, tau=0.058)
+                             hubble_l**2, omch2=dict_MPS['Omegach2']*hubble_l**2, tau=0.058)
         pars_u.set_cosmology(H0=hubble_l*100, ombh2=dict_MPS['Omegab'] *
-                             hubble_u**2, omch2=dict_MPS['Omegac']*hubble_u**2, tau=0.058)
+                             hubble_u**2, omch2=dict_MPS['Omegach2']*hubble_u**2, tau=0.058)
         results_l = camb.get_results(pars_l)
         results_u = camb.get_results(pars_u)
         chistar_l = results_l.conformal_time(0) - results_l.tau_maxvis
@@ -1063,11 +1049,7 @@ def d_params_PMS(z, l, dz=str(), cosmo_pars=dict()):
                                         var1=model.Transfer_tot,
                                         var2=model.Transfer_tot,
                                         zmax=zs[-1])
-        for l in ls_eval:
-            k = (l + 1/2) / r(z)
-            lst_h_l.append(PK_l.P(z , k))
-            lst_h_u.append(PK_u.P(z , k))
-            return np.polyfit(lst_h_l, lst_h_u, 1)[0]
+        return (PK_u.P(z, k) - PK_l.P(z, k)) / 2*dx
 
 
 
@@ -1088,60 +1070,120 @@ def d_MPS(z, l, dz=str(), cosmo_pars=dict()):
 
 def int_1_C(z, l, i, j, dz=str(), cosmo_pars=dict()):
     k = (l + 1/2) / r(z)
+    term_1 = PK.P(z, k)
     if dz == "Om":
-        return d_K(z, i, j, "Om", cosmo_pars)*PK.P(z, k)
+        return d_K(z, i, j, "Om", cosmo_pars)*term_1
     elif dz == "ODE":
-        return d_K(z, i, j, "ODE", cosmo_pars)*PK.P(z, k)
+        return d_K(z, i, j, "ODE", cosmo_pars)*term_1
     elif dz == "w0":
-        return d_K(z, i, j, "w0", cosmo_pars)*PK.P(z, k)
+        return d_K(z, i, j, "w0", cosmo_pars)*term_1
     elif dz == "wa":
-        return d_K(z, i, j, "wa", cosmo_pars)*PK.P(z, k)
+        return d_K(z, i, j, "wa", cosmo_pars)*term_1
     elif dz == "h":
-        return d_K(z, i, j, "h", cosmo_pars)*PK.P(z, k)
+        return d_K(z, i, j, "h", cosmo_pars)*term_1
 
 
 def int_2_C(z, l, i, j, dz=str(), cosmo_pars=dict()):
-    k = (l + 1/2) / r(z)
+    term_1 = K_yy(z, i, j)
     if dz == "Om":
-        return K_yy(z, i, j)*d_MPS(z, l, "Om")
+        return term_1*d_MPS(z, l, "Om")
     elif dz == "ODE":
-        return K_yy(z, i, j)*d_MPS(z, l, "ODE")
+        return term_1*d_MPS(z, l, "ODE")
     elif dz == "w0":
-        return K_yy(z, i, j)*d_MPS(z, l, "w0")
+        return term_1*d_MPS(z, l, "w0")
     elif dz == "wa":
-        return K_yy(z, i, j)*d_MPS(z, l, "wa")
+        return term_1*d_MPS(z, l, "wa")
     elif dz == "h":
-        return K_yy(z, i, j)*d_MPS(z, l, "h")
+        return term_1*d_MPS(z, l, "h")
+
+
+def int_3_C(z, l, i, j, dz=str(), cosmo_pars=dict()):
+
+    k = (l + 1/2) / r(z)
+    term_1 = PK.P(z, k)
+    term_2 = K_yy(z, i, j)
+    if dz == "Om":
+        I1 = d_K(z, i, j, "Om", cosmo_pars)*term_1
+        I2 = term_2*d_MPS(z, l, "Om")
+        return I1 + I2
+    elif dz == "ODE":
+        I1 = d_K(z, i, j, "ODE", cosmo_pars)*term_1
+        I2 = term_2*d_MPS(z, l, "ODE")
+        return I1 + I2
+    elif dz == "w0":
+        I1 = d_K(z, i, j, "w0", cosmo_pars)*term_1
+        I2 = term_2*d_MPS(z, l, "w0")
+        return I1 + I2
+    elif dz == "wa":
+        I1 = d_K(z, i, j, "wa", cosmo_pars)*term_1
+        I2 = term_2*d_MPS(z, l, "wa")
+        return I1 + I2
+    elif dz == "h":
+        I1 = d_K(z, i, j, "h", cosmo_pars)*term_1
+        I2 = term_2*d_MPS(z, l, "h")
+        return I1 + I2
 
 
 def d_C(l, i, j, dz=str(), cosmo_pars=dict()):
-    z_int = np.linspace(limits[0], limits[1], 200)
     if dz == "Om":
-        I1 = np.trapz(int_1_C(z_int, l, i, j, "Om", cosmo_pars), z_int)
-        I2 = np.trapz(int_2_C(z_int, l, i, j, "Om", cosmo_pars), z_int)
-        return I1 * I2
+        return integrate.quad(int_3_C, limits[0], limits[1], args=(l, i, j, "Om"))[0]
     elif dz == "ODE":
-        I1 = np.trapz(int_1_C(z_int, l, i, j, "ODE", cosmo_pars), z_int)
-        I2 = np.trapz(int_2_C(z_int, l, i, j, "ODE", cosmo_pars), z_int)
-        return I1 * I2
+        return integrate.quad(int_3_C, limits[0], limits[1], args=(l, i, j, "ODE"))[0]
     elif dz == "w0":
-        I1 = np.trapz(int_1_C(z_int, l, i, j, "w0", cosmo_pars), z_int)
-        I2 = np.trapz(int_2_C(z_int, l, i, j, "w0", cosmo_pars), z_int)
-        return I1 * I2
+        return integrate.quad(int_3_C, limits[0], limits[1], args=(l, i, j, "w0"))[0]
     elif dz == "wa":
-        I1 = np.trapz(int_1_C(z_int, l, i, j, "wa", cosmo_pars), z_int)
-        I2 = np.trapz(int_2_C(z_int, l, i, j, "wa", cosmo_pars), z_int)
-        return I1 * I2
+        return integrate.quad(int_3_C, limits[0], limits[1], args=(l, i, j, "wa"))[0]
     elif dz == "h":
-        I1 = np.trapz(int_1_C(z_int, l, i, j, "h", cosmo_pars), z_int)
-        I2 = np.trapz(int_2_C(z_int, l, i, j, "h", cosmo_pars), z_int)
-        return I1 * I2
+        return integrate.quad(int_3_C, limits[0], limits[1], args=(l, i, j, "h"))[0]
 
 
+# d_C_wa = np.zeros((len(ls_eval), 10, 10))
+
+# for idx, ell in enumerate(ls_eval):
+#     for i in range(10):
+#         for j in range(10):
+#             d_C_wa[idx, i, j] = d_C(ell, i, j, "wa")
+#             print("i: %f, j: %f" %(i, j), end = '\r')
+
+# reshape_cosmic = np.reshape(d_C_wa, (d_C_wa.shape[0], -1))
+# np.savetxt('D_C/cosmic_shear_wa', reshape_cosmic)
 
 
+# FISHER MATRIX 
+
+def f_c_sum1(a, b, dict=dict()):
+    sum = 0
+    for i in range(10):
+        for j in range(10):
+            for m in range(10):
+                for n in range(10):
+                    d_C_a = dict[a][:,i,j]
+                    d_C_b = dict[b][:,m,n]
+                    cov_inv = np.linalg.inv(Cov(i, j, m, n))
+                    term_1 = np.dot(cov_inv, d_C_b)
+                    sum += np.dot(d_C_a, term_1)
+    return sum
 
 
+def f_e_sum1(a, b, dict=dict()):
+    sum = 0
+    for i in range(10):
+        for j in range(10):
+            for m in range(10):
+                for n in range(10):
+                    d_C_a = dict[a][:,i,j]
+                    d_C_b = dict[b][:,m,n]
+                    OE_ni = np.linalg.inv(Obs_E(n, i))
+                    OE_jm = np.linalg.inv(Obs_E(j, m))
+                    term_1 = np.dot(OE_ni, d_C_b)
+                    term_2 = np.dot(OE_jm, d_C_a)
+                    sum += term_1 @ term_2
+    return sum
+
+def f_c_sum2(l):
+    sum = 0
+    for l in ls_eval:
+        
 # EXTRA Compact Notation with Kernel functions
 
 
