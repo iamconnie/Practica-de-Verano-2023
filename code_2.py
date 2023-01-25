@@ -468,10 +468,10 @@ def Window_F(z, i, cosmo_pars=dict()):
 # fig.show()
 
 
-# fig, ax = plt.subplots()
+# fig, ax = plt.subplots(figsize=(10,8))
 
 # for i in range(10):
-#     ax.plot(z_arr, interpolate_n_i['I_%s'%(str(i))](z_arr), c='b')
+#     ax.plot(z_arr, interpolate_n_i['I_%s'%(str(i))](z_arr), c='mediumpurple')
 # ax.plot(z_arr, 25*n(z_arr), c='red')
 # ax.set_xlabel('Redshift $z$')
 # ax.set_ylabel('Number density')
@@ -482,7 +482,7 @@ def Window_F(z, i, cosmo_pars=dict()):
 
 
 nz = 100  # number of steps to use for the radial/redshift integration
-kmax = 7   # kmax to use with k_hunit = Mpc/h
+kmax = 50   # kmax to use with k_hunit = Mpc/h
 
 # For Limber result, want integration over \chi, from 0 to chi_*.
 # so get background results to find chistar, set up a range in chi,
@@ -511,16 +511,49 @@ PK = camb.get_matter_power_interpolator(pars,
 # Have a look at interpolated power spectrum results for a range of redshifts
 # Expect linear potentials to decay a bit when Lambda becomes important,
 # and change from non-linear growth
-
-# plt.figure(figsize=(8,5))
-# k = np.exp(np.log(10)*np.linspace(-4, 7, 200))
-# for z in z_bin_equi[0]:
+# plt.figure(figsize=(10,8))
+# k = np.exp(np.log(10)*np.linspace(-4, 50, 200))
+# z_MPS = [0.11363636, 1.12373737, 2.38636364]
+# for z in z_MPS:
 #     plt.loglog(k, PK.P(z, k), color='mediumpurple')
-# plt.xlim([1e-4,kmax])
+# plt.xlim([1e-4, kmax])
 # plt.xlabel('Wave-number k (h/Mpc)')
 # plt.ylabel('$P_k, Mpc^3$')
 # plt.legend(['z=%s'%z for z in z_bin_equi[0]])
+# plt.rc('font', size=15)
+# plt.rc('axes', titlesize=15)
 # plt.show()
+
+
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# k = np.exp(np.log(10)*np.linspace(-4, 50, 200))
+# z_MPS = [0.11363636, 1.12373737, 2.38636364]
+# for z in z_MPS:
+#     ax.scatter(k, PK.P(z, k), color='mediumpurple', s=0.5)
+# ax.set_xlim([1e-4, kmax])
+# ax.set_xlabel('Wave-number k (h/Mpc)')
+# ax.set_ylabel('$P_k, Mpc^3$')
+# ax.set_xscale('log')
+# ax.set_yscale('log')
+# #ax.legend(z = z_bin_equi[0][0])
+# fig.show()
+
+# fig, ax = plt.subplots(figsize=(10,8) )
+# k = np.exp(np.log(10)*np.linspace(-4, 50, 200))
+# zs_mps =[0.5, 1, 1.5, 2]
+# for z in zs_mps:
+#     #ax.plot(kh, pk[i,:], 'x', ms=4)
+#     ax.plot(k, PK.P(z, k), c='mediumpurple', label='z=%f'%(z))
+# ax.set_yscale('log')
+# ax.set_xscale('log')
+# ax.set_xbound(1e-4, 50)
+# ax.set_ybound(1.5e-1, 1e5)
+# ax.set_xlabel('Wave-number $k$ ($h$/Mpc)')
+# ax.set_ylabel('$P_{\delta\delta}(k,z)$')
+# #ax.set_title('Matter power spectrum for fixed redshifts')
+# ax.legend()
+# fig.show()
+
 
 
 # Calculation of Cosmic shear power spectrum:
@@ -583,13 +616,13 @@ def C(l, i, j, cosmo_pars=dict()):
 
 # np.savetxt('quad_convergence/quad_file', reshape_cosmic)
 
-C_l_n = np.loadtxt('Convergence/convergence_file.txt')
+#C_l_n = np.loadtxt('Convergence/cosmic_shear_correctls.txt')
+C_l_n = np.loadtxt('Convergence/convergence_ells.txt')
 
 C_l_i_j = np.reshape(C_l_n, (C_l_n.shape[0],
                              C_l_n.shape[1]
                              // 10, 10))
 
-np.save('quad_convergence/quad_file', C)
 
 lst_C_l = dict()
 for l in range(100):
@@ -601,6 +634,10 @@ l_lst = np.linspace(10, 1500, 100)
 ls = np.logspace(1, np.log10(1500), 101)
 l_bins = [(ls[i], ls[i + 1]) for i in range(100)]
 ls_eval = np.array([(l_bins[i][1] + l_bins[i][0]) / 2 for i in range(100)])
+
+def shot_noise(sigma_e=0.3, ng=30):
+    ng_new = ng * (180 * 60 / np.pi) ** 2
+    return sigma_e ** 2 / ng_new
 
 
 def Delta_l(i):
@@ -618,8 +655,8 @@ def Cov(i, j, m, n):
     M = np.zeros((100, 100))
     for x, l in enumerate(ls_eval):
         dl = l_bins[x][1] - l_bins[x][0]
-        term_1 = C_l_i_j[x, i, m] * C_l_i_j[x, j, n]
-        term_2 = C_l_i_j[x, i, n] * C_l_i_j[x, j, m]
+        term_1 = (C_l_i_j[x, i, m] + shot_noise()) * (C_l_i_j[x, j, n] + shot_noise())
+        term_2 = (C_l_i_j[x, i, n] + shot_noise()) * (C_l_i_j[x, j, m] + shot_noise())
         term_3 = (2*l + 1)*f_sky*dl
         M[x, x] = (term_1 + term_2) / term_3
     return M
@@ -635,6 +672,14 @@ def Obs_E(i, j):
     return M 
 
 
+def error_convergence(l_dx, i, j, dl=1490):
+    dl = l_bins[l_dx][1] - l_bins[l_dx][0]
+    f_sky = 0.36361
+    term1 = np.sqrt(2 / ((2 * ls_eval[l_dx]  + 1) * dl * f_sky))
+    term2 = C_l_i_j[i][j] + shot_noise()
+    return term1 * term2 
+
+
 def K_yy(z, i, j, cosmo_pars=dict()):
     H0, Om, ODE, OL, Ok, wa, w0 = cosmological_parameters(cosmo_pars)
     c = const.c.value / 1000
@@ -645,11 +690,13 @@ def K_yy(z, i, j, cosmo_pars=dict()):
     return term_1*cte*term_2
 
 
-def shot_noice(l, i, j):
-    ng = 354543085.80106884
-    sigma_e = 0.30
-    n = ng/10
-    return (sigma_e/n)*np.kron(i, j)
+# def shot_noice(l, i, j):
+#     ng = 354543085.80106884
+#     sigma_e = 0.30
+#     n = ng/10
+#     return (sigma_e/n)*np.kron(i, j)
+
+
 
 
 
@@ -662,16 +709,18 @@ im = ax.imshow(Cov(i, j, m, n))
 ax.set_title('Cov$[C_{%i%i}^{\gamma\gamma}(\ell), C_{%i%i}^{\gamma\gamma}(\ell)]$'%(i,j,m,n))
 ax.set_ylim(ax.get_ylim()[::-1])
 fig.colorbar(im)
-fig.show()
+#fig.show()
 
-fig, ax = plt.subplots()
+# fig, ax = plt.subplots()
 
-ell = 100
-im = ax.imshow(Obs_E(i,j))
-ax.set_title('$\Delta C_{ij}^{\gamma\gamma}(\ell=%i)$'%ell)
-ax.set_ylim(ax.get_ylim()[::-1])
-fig.colorbar(im)
-# fig.show()
+# ell_idx = 43
+
+# fig, ax = plt.subplots()
+
+# im = ax.imshow(error_convergence(ell_idx))
+# ax.set_title('$\Delta C_{ij}^{\gamma\gamma}(\ell=%f)$'%ls_eval[ell_idx])
+# ax.set_ylim(ax.get_ylim()[::-1])
+# fig.colorbar(im)
 
 fig, ax = plt.subplots()
 ltoplt = np.arange(100, 300)
@@ -692,7 +741,7 @@ ax.legend((lo, ll),
            fontsize=10)
 # fig.show()
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(9,9))
 
 i, j = 9, 9
 
@@ -700,6 +749,8 @@ for idx, l in enumerate(ls_eval):
     ax.scatter(l, C_l_i_j[idx, i, j], c='mediumpurple', s=0.5)
 ax.set_xlabel('Multipole $\ell$')
 ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma}(\ell)$'%(str(i),str(j)))
+ax.set_xscale('log')
+ax.set_yscale('log')
 fig.show()
 
 # # DERIVATES
@@ -1186,19 +1237,40 @@ def f_e_sum1(a, b, dict=dict()):
                 for n in range(10):
                     d_C_a = dict[a][:,i,j]
                     d_C_b = dict[b][:,m,n]
-                    OE_ni = np.linalg.inv(Obs_E(n, i))
-                    OE_jm = np.linalg.inv(Obs_E(j, m))
+                    OE_ni = np.linalg.inv(error_convergence(n, i))
+                    OE_jm = np.linalg.inv(error_convergence(j, m))
                     term_1 = np.dot(OE_ni, d_C_b)
                     term_2 = np.dot(OE_jm, d_C_a)
                     sum += term_1 @ term_2
     return sum
 
-F_a_b = np.array([[f_c("Omegam", "Omegam", dict_d_C), f_c("Omegam", "hubble", dict_d_C),f_c("Omegam", "ns", dict_d_C), f_c("Omegam", "sigma8", dict_d_C)],
-                  [f_c("hubble", "Omegam", dict_d_C),f_c("hubble", "hubble", dict_d_C),f_c("hubble", "ns", dict_d_C),f_c("hubble", "sigma8", dict_d_C)],
-                  [f_c("ns", "Omegam", dict_d_C),f_c("ns", "hubble", dict_d_C),f_c("ns", "ns", dict_d_C),f_c("ns", "sigma8", dict_d_C)],
-                  [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "hubble", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "sigma8", dict_d_C)]])
-C_a_b = np.linalg.inv(F_a_b)
-sigma_Om, sigma_s8, sigma_ns, sigma_h = np.sqrt(np.diag(C_a_b))
+
+# F_a_b = np.array([[f_c("Omegam", "Omegam", dict_d_C), f_c("Omegam", "hubble", dict_d_C),f_c("Omegam", "ns", dict_d_C), f_c("Omegam", "sigma8", dict_d_C)],
+#                   [f_c("hubble", "Omegam", dict_d_C),f_c("hubble", "hubble", dict_d_C),f_c("hubble", "ns", dict_d_C),f_c("hubble", "sigma8", dict_d_C)],
+#                   [f_c("ns", "Omegam", dict_d_C),f_c("ns", "hubble", dict_d_C),f_c("ns", "ns", dict_d_C),f_c("ns", "sigma8", dict_d_C)],
+#                   [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "hubble", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "sigma8", dict_d_C)]])
+# C_a_b = np.linalg.inv(F_a_b)
+# sigma_Om, sigma_s8, sigma_ns, sigma_h = np.sqrt(np.diag(C_a_b))
+
+# marg_sigma = np.sqrt(np.abs(np.linalg.inv(F_a_b).diagonal()))
+# unmarg_sigma = np.sqrt(1/F_a_b.diagonal())
+
+
+# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
+# ref_param = [0.018, 0.21, 0.035, 0.0087]
+# for idx in range(4):
+#     marg_diff = (1 - marg_sigma[idx]/ref_param[idx]) * 100
+#     unmarg_diff = (1 - unmarg_sigma[idx]/ref_param[idx]) * 100
+#     ax.scatter(idx, marg_diff, c='blue', label='Marginalised')
+#     ax.scatter(idx, unmarg_diff, c='red')
+# ax.set_label(['Marginalised', 'Unmarginalised'])
+# ax.set_xticks(range(4))
+# ax.set_xticklabels(['$\Omega_{m,0}$', '$h$', '$n_s$', '$\sigma_8$'])
+# ax.set_ylabel('%'+' differences on $\sigma_i$')
+# ax.legend()
+# fig.show()
+
+
 
 # EXTRA Compact Notation with Kernel functions
 
