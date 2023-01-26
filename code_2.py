@@ -14,6 +14,8 @@ from astropy import constants as const
 import scipy.interpolate as interpolate
 from scipy.stats import linregress
 
+plt.rc('font', size=15)  #fontsize for plots
+plt.rc('axes', titlesize=16)#fontsize of the title
 
 # instalacion de camb
 
@@ -538,12 +540,13 @@ PK = camb.get_matter_power_interpolator(pars,
 # #ax.legend(z = z_bin_equi[0][0])
 # fig.show()
 
-# fig, ax = plt.subplots(figsize=(10,8) )
+# fig, ax = plt.subplots()
+
 # k = np.exp(np.log(10)*np.linspace(-4, 50, 200))
 # zs_mps =[0.5, 1, 1.5, 2]
 # for z in zs_mps:
 #     #ax.plot(kh, pk[i,:], 'x', ms=4)
-#     ax.plot(k, PK.P(z, k), c='mediumpurple', label='z=%f'%(z))
+#     ax.plot(k, PK.P(z, k), c='mediumpurple', label="z={:.1f}".format(z))
 # ax.set_yscale('log')
 # ax.set_xscale('log')
 # ax.set_xbound(1e-4, 50)
@@ -551,7 +554,7 @@ PK = camb.get_matter_power_interpolator(pars,
 # ax.set_xlabel('Wave-number $k$ ($h$/Mpc)')
 # ax.set_ylabel('$P_{\delta\delta}(k,z)$')
 # #ax.set_title('Matter power spectrum for fixed redshifts')
-# ax.legend()
+# ax.legend(prop={'size': 10})
 # fig.show()
 
 
@@ -741,17 +744,18 @@ ax.legend((lo, ll),
            fontsize=10)
 # fig.show()
 
-fig, ax = plt.subplots(figsize=(9,9))
+# fig, ax = plt.subplots()
 
-i, j = 9, 9
+# i, j = 9, 9
 
-for idx, l in enumerate(ls_eval):
-    ax.scatter(l, C_l_i_j[idx, i, j], c='mediumpurple', s=0.5)
-ax.set_xlabel('Multipole $\ell$')
-ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma}(\ell)$'%(str(i),str(j)))
-ax.set_xscale('log')
-ax.set_yscale('log')
-fig.show()
+# for idx, l in enumerate(ls_eval):
+#     ax.scatter(l, C_l_i_j[idx, i, j], c='mediumpurple', s=0.5)
+# ax.set_xlabel('Multipole $\ell$')
+# ax.set_ylabel(r'$C_{%s%s}^{\gamma\gamma}(\ell)$'%(str(i),str(j)))
+# ax.set_xscale('log')
+# ax.set_yscale('log')
+# ax.legend(prop={'size': 10})
+# fig.show()
 
 # # DERIVATES
 
@@ -1245,30 +1249,30 @@ def f_e_sum1(a, b, dict=dict()):
     return sum
 
 
-# F_a_b = np.array([[f_c("Omegam", "Omegam", dict_d_C), f_c("Omegam", "hubble", dict_d_C),f_c("Omegam", "ns", dict_d_C), f_c("Omegam", "sigma8", dict_d_C)],
-#                   [f_c("hubble", "Omegam", dict_d_C),f_c("hubble", "hubble", dict_d_C),f_c("hubble", "ns", dict_d_C),f_c("hubble", "sigma8", dict_d_C)],
-#                   [f_c("ns", "Omegam", dict_d_C),f_c("ns", "hubble", dict_d_C),f_c("ns", "ns", dict_d_C),f_c("ns", "sigma8", dict_d_C)],
-#                   [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "hubble", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "sigma8", dict_d_C)]])
-# C_a_b = np.linalg.inv(F_a_b)
-# sigma_Om, sigma_s8, sigma_ns, sigma_h = np.sqrt(np.diag(C_a_b))
+F_a_b = np.array([[f_c("Omegam", "Omegam", dict_d_C), f_c("Omegam", "hubble", dict_d_C),f_c("Omegam", "ns", dict_d_C), f_c("Omegam", "sigma8", dict_d_C)],
+                  [f_c("hubble", "Omegam", dict_d_C),f_c("hubble", "hubble", dict_d_C),f_c("hubble", "ns", dict_d_C),f_c("hubble", "sigma8", dict_d_C)],
+                  [f_c("ns", "Omegam", dict_d_C),f_c("ns", "hubble", dict_d_C),f_c("ns", "ns", dict_d_C),f_c("ns", "sigma8", dict_d_C)],
+                  [f_c("sigma8", "Omegam", dict_d_C),f_c("sigma8", "hubble", dict_d_C),f_c("sigma8", "ns", dict_d_C),f_c("sigma8", "sigma8", dict_d_C)]])
+C_a_b = np.linalg.inv(F_a_b)
+sigma_Om, sigma_s8, sigma_ns, sigma_h = np.sqrt(np.diag(C_a_b))
 
-# marg_sigma = np.sqrt(np.abs(np.linalg.inv(F_a_b).diagonal()))
-# unmarg_sigma = np.sqrt(1/F_a_b.diagonal())
+marg_sigma = np.sqrt(np.abs(np.linalg.inv(F_a_b).diagonal()))
+unmarg_sigma = np.sqrt(1/F_a_b.diagonal())
 
 
-# fig, ax = plt.subplots(1, 1, sharey='row', sharex='col', figsize=(10, 8))
-# ref_param = [0.018, 0.21, 0.035, 0.0087]
-# for idx in range(4):
-#     marg_diff = (1 - marg_sigma[idx]/ref_param[idx]) * 100
-#     unmarg_diff = (1 - unmarg_sigma[idx]/ref_param[idx]) * 100
-#     ax.scatter(idx, marg_diff, c='blue', label='Marginalised')
-#     ax.scatter(idx, unmarg_diff, c='red')
-# ax.set_label(['Marginalised', 'Unmarginalised'])
-# ax.set_xticks(range(4))
-# ax.set_xticklabels(['$\Omega_{m,0}$', '$h$', '$n_s$', '$\sigma_8$'])
-# ax.set_ylabel('%'+' differences on $\sigma_i$')
-# ax.legend()
-# fig.show()
+fig, ax = plt.subplots()
+ref_param = [0.018, 0.21, 0.035, 0.0087]
+for idx in range(4):
+    marg_diff = (1 - marg_sigma[idx]/ref_param[idx]) * 100
+    unmarg_diff = (1 - unmarg_sigma[idx]/ref_param[idx]) * 100
+    ax.scatter(idx, marg_diff, c='blue', label='Marginalised')
+    ax.scatter(idx, unmarg_diff, c='red')
+ax.set_label(['Marginalised', 'Unmarginalised'])
+ax.set_xticks(range(4))
+ax.set_xticklabels(['$\Omega_{m,0}$', '$h$', '$n_s$', '$\sigma_8$'])
+ax.set_ylabel('%'+' differences on $\sigma_i$')
+ax.legend(['Marginalised', 'Unmarginalised'], prop={'size':10})
+fig.show()
 
 
 
